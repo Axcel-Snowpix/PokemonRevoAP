@@ -1,0 +1,58 @@
+# The save file is loaded into a different address in memory every time you boot up the game.
+# You can find where it is by reading **0x8045DE80**.
+
+# Every profile is at an offset of 0x6FF00 * [profile's index].
+Current Profile's Index: 0x50
+Profile Slot 2 Offset: 0x6FF00
+Profile Slot 3 Offset: 0xDFE00
+Profile Slot 4 Offset: 0x14FD00
+
+Save Data Offsets:
+
+Poké Coupons: 0x12861
+
+Gateway Colosseum Clears: 0x12870
+Main Street Colosseum Clears: 0x12877
+Waterfall Colosseum Clears: 0x12876
+Neon Colosseum Clears: 0x12875
+Crystal Colosseum Clears: 0x12874
+Sunny Park Colosseum Clears: 0x1287B
+Magma Colosseum Clears: 0x1287A
+Courtyard Colosseum Clears: 0x12879
+Sunset Colosseum Clears: 0x12878
+Stargazer Colosseum Clears: 0x1287F
+
+Colosseum Unlock Bitfield 1: 0x12889
+Colosseum Unlock Bitfield 2: 0x12888
+Post Game Flag: 0x12891
+
+Cyndy's Rental Pass: 0x23DB9
+Nate's Rental Pass: 0x244A5
+Tommy's Rental Pass: 0x24B91
+Daisy's Rental Pass: 0x2527D
+Joel's Rental Pass: 0x25969
+Natalie's Rental Pass: 0x26055
+
+Rental Pass Bits:
+
+Rental Pass Available at Gateway: +0x08 | Bit Index 3
+Rental Pass Unlocked: +0x10 | Bit Index 4
+
+# Note: When is this ever turned off?
+Turn on the Lights (?): +0x40 | Bit Index 6
+
+Colosseum Unlock Bitfield 1 Bits:
+
+Gateway Colosseum: +0x10 | Bit Index 4
+Main Street Colosseum: +0x20 | Bit Index 5
+Waterfall Colosseum: +0x40 | Bit Index 6
+Neon Colosseum: +0x80 | Bit Index 7
+
+Colosseum Unlock Bitfield 2 Bits:
+
+Crystal Colosseum: +0x01 | Bit Index 0
+Sunny Park Colosseum: +0x02 | Bit Index 1
+Magma Colosseum: +0x04 | Bit Index 2
+Courtyard Colosseum: +0x08 | Bit Index 3
+Sunset Colosseum: +0x10 | Bit Index 4
+Stargazer Colosseum: +0x20 | Bit Index 5

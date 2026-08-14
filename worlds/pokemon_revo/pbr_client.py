@@ -339,25 +339,29 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
     """
     save_file_address = find_save_file_address()
     colo_flag_2_value = dolphin_memory_engine.read_byte(save_file_address + COLOSSEUMS_FLAG_2)
-    unlock_stargazer = False
+    badge_hunt_req = False
+    colosseum_clear_req = False
 
     if not bool((colo_flag_2_value >> 5) & 1):
-        if ctx.slot_data["goal_unlock_method"] == 0:
+        if ctx.slot_data["goal_unlock_method"] != 1:
             current_badge_count = dolphin_memory_engine.read_byte(BADGE_COUNT)
             if current_badge_count >= ctx.slot_data["required_badge_amount"]:
-                unlock_stargazer = True
-        elif ctx.slot_data["goal_unlock_method"] == 1:
+                badge_hunt_req = True
+        if ctx.slot_data["goal_unlock_method"] != 0:
             for location in LOCATION_TABLE:
                 if LOCATION_TABLE[location].group == "Colosseum Clears":
                     colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + LOCATION_TABLE[location].offset)
                     if colosseum_clears_value > 0x0 and LOCATION_TABLE[location].region not in ctx.colosseums_cleared:
                         ctx.colosseums_cleared.append(LOCATION_TABLE[location].region)
             if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
-                unlock_stargazer = True
-
-        if unlock_stargazer:
+                colosseum_clear_req = True
+        if (
+            (ctx.slot_data["goal_unlock_method"] == 0 and badge_hunt_req) or
+            (ctx.slot_data["goal_unlock_method"] == 1 and colosseum_clear_req) or
+            (ctx.slot_data["goal_unlock_method"] == 2 and badge_hunt_req and colosseum_clear_req)
+        ):
             dolphin_memory_engine.write_byte(save_file_address + COLOSSEUMS_FLAG_2,
-                                                colo_flag_2_value + 0x20)
+                                             colo_flag_2_value + 0x20)
 
 
 def check_ingame() -> bool:

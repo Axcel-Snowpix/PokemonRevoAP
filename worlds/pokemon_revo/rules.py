@@ -31,13 +31,15 @@ def set_all_location_rules(world: PBRWorld) -> None:
 
 def set_completion_condition(world: PBRWorld) -> None:
     stargazer_colosseum = world.get_entrance("Menu to Stargazer Colosseum")
-    if world.options.goal_unlock_method == "badge_hunt":
-        world.set_rule(stargazer_colosseum, Has("Pokétopia Badge", count=world.options.required_badge_amount.value))
-    else:
-        world.set_rule(stargazer_colosseum, HasFromList("Gateway Colosseum", "Main Street Colosseum",
-                                                        "Waterfall Colosseum", "Neon Colosseum",
-                                                        "Crystal Colosseum", "Sunny Park Colosseum",
-                                                        "Magma Colosseum", "Courtyard Colosseum",
-                                                        "Sunset Colosseum",
-                                                        count=world.options.colosseum_clear_count.value))
+    stargazer_rule = Rule
+    if world.options.goal_unlock_method != "colosseum_clears":
+        stargazer_rule = Has("Pokétopia Badge", count=world.options.required_badge_amount.value)
+    if world.options.goal_unlock_method != "badge_hunt":
+        stargazer_rule = stargazer_rule & HasFromList("Gateway Colosseum", "Main Street Colosseum",
+                                                      "Waterfall Colosseum", "Neon Colosseum",
+                                                      "Crystal Colosseum", "Sunny Park Colosseum",
+                                                      "Magma Colosseum", "Courtyard Colosseum",
+                                                      "Sunset Colosseum",
+                                                      count=world.options.colosseum_clear_count.value)
+    world.set_rule(stargazer_colosseum, stargazer_rule)
     world.set_completion_rule(Has("Victory"))

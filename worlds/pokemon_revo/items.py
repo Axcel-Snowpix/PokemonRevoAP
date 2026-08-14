@@ -123,7 +123,7 @@ def create_all_items(world: PBRWorld) -> None:
                 else:
                     world.push_precollected(world.create_item(item))
         elif ITEM_TABLE[item].group == "Macguffin":
-            if world.options.goal_unlock_method == "badge_hunt":
+            if world.options.goal_unlock_method == "badge_hunt" or world.options.goal_unlock_method == "both":
                 for _ in range(0,world.options.total_badge_amount):
                     itempool.append(world.create_item(item))
 

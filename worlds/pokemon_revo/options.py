@@ -8,7 +8,7 @@ class GoalUnlockMethod(Choice):
 
     Badge Hunt: Stargazer Colosseum will be unlocked once you get a certain number of Pokétopia Badges (macguffin item).
     Colosseum Clears: Stargazer Colosseum will be unlocked once you beat a certain number of Colosseums.
-    Both: Both of the above requirements will need to be met before Stargazer Colosseum can be unlocked,
+    Both: Both of the above requirements will need to be met before Stargazer Colosseum can be unlocked.
     """
     display_name = "Goal Unlock Method"
     option_badge_hunt = 0

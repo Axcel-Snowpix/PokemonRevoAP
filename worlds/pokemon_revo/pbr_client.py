@@ -179,7 +179,7 @@ def read_short(console_address: int) -> int:
     return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, 2), byteorder="big")
 
 
-def read_long(console_address: int) -> int:
+def read_word(console_address: int) -> int:
     """
     Read 4-bytes from Dolphin memory.
 
@@ -214,9 +214,9 @@ def find_save_file_address():
     """
     Finds the starting address of the current profile in memory.
     """
+    save_file_start = read_word(SAVE_FILE_FIND_ADDR)
     return (
-        read_long(SAVE_FILE_FIND_ADDR) + 
-        dolphin_memory_engine.read_byte(read_long(SAVE_FILE_FIND_ADDR) + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET
+        save_file_start + dolphin_memory_engine.read_byte(save_file_start + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET
     )
 
 
@@ -370,7 +370,7 @@ def check_ingame() -> bool:
 
     :return: `True` if the player is in-game, otherwise `False`.
     """
-    return dolphin_memory_engine.read_byte(read_long(SAVE_FILE_FIND_ADDR)) != 0x0
+    return dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0
 
 
 async def dolphin_sync_task(ctx: PBRContext) -> None:

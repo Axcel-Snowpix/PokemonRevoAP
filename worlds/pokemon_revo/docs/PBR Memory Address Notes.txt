@@ -1,37 +1,39 @@
 # The save file is loaded into a different address in memory every time you boot up the game.
 # You can find where it is by reading **0x8045DE80**.
 
-# Every profile is at an offset of 0x6FF00 * [profile's index].
-Current Profile's Index: 0x50
-Profile Slot 2 Offset: 0x6FF00
-Profile Slot 3 Offset: 0xDFE00
-Profile Slot 4 Offset: 0x14FD00
+# From the offset of 0x380 onwards, everything is specific to certain profiles.
+# Every profile is at an offset of 0x380 + 0x6FF00 * [profile's index].
+Current Profile's Index Finder: 0x50
+Profile Slot 1 Offset: 0x380
+Profile Slot 2 Offset: 0x70280
+Profile Slot 3 Offset: 0xE0180
+Profile Slot 4 Offset: 0x150080
 
 Save Data Offsets:
 
-Poké Coupons: 0x12861
+Poké Coupons: 0x124E1
 
-Gateway Colosseum Clears: 0x12870
-Main Street Colosseum Clears: 0x12877
-Waterfall Colosseum Clears: 0x12876
-Neon Colosseum Clears: 0x12875
-Crystal Colosseum Clears: 0x12874
-Sunny Park Colosseum Clears: 0x1287B
-Magma Colosseum Clears: 0x1287A
-Courtyard Colosseum Clears: 0x12879
-Sunset Colosseum Clears: 0x12878
-Stargazer Colosseum Clears: 0x1287F
+Gateway Colosseum Clears: 0x124F0
+Main Street Colosseum Clears: 0x124F7
+Waterfall Colosseum Clears: 0x124F6
+Neon Colosseum Clears: 0x124F5
+Crystal Colosseum Clears: 0x124F4
+Sunny Park Colosseum Clears: 0x124FB
+Magma Colosseum Clears: 0x124FA
+Courtyard Colosseum Clears: 0x124F9
+Sunset Colosseum Clears: 0x124F8
+Stargazer Colosseum Clears: 0x124FF
 
-Colosseum Unlock Bitfield 1: 0x12889
-Colosseum Unlock Bitfield 2: 0x12888
-Post Game Flag: 0x12891
+Colosseum Unlock Bitfield 1: 0x12508
+Colosseum Unlock Bitfield 2: 0x12508
+Post Game Flag: 0x12511
 
-Cyndy's Rental Pass: 0x23DB9
-Nate's Rental Pass: 0x244A5
-Tommy's Rental Pass: 0x24B91
-Daisy's Rental Pass: 0x2527D
-Joel's Rental Pass: 0x25969
-Natalie's Rental Pass: 0x26055
+Cyndy's Rental Pass: 0x23A39
+Nate's Rental Pass: 0x24125
+Tommy's Rental Pass: 0x24811
+Daisy's Rental Pass: 0x24EFD
+Joel's Rental Pass: 0x255E9
+Natalie's Rental Pass: 0x25CD5
 
 Rental Pass Bits:
 
@@ -56,3 +58,81 @@ Magma Colosseum: +0x04 | Bit Index 2
 Courtyard Colosseum: +0x08 | Bit Index 3
 Sunset Colosseum: +0x10 | Bit Index 4
 Stargazer Colosseum: +0x20 | Bit Index 5
+
+Save Slot Data
+0x8: play_time (double)
+0x10: name[10] (wchar_t, maybe longer only 10 is used in english)
+0x30: birthday_month[4] (wchar_t, yes pretty sure it's stored as a string despite being a number, length is an assumption)
+0x38: birthday_day[4] (wchar_t, yes pretty sure it's stored as a string despite being a number, length is an assumption)
+0x40: region_id (uin16_t)
+0x42: sub_region_id (uint16_t, ie: California)
+0x48: self_introduction[50] (wchar_t, might be slightly longer, but unused in english)
+
+(SAVE DATA POINTER OFFSETS (-380) )
+
+0x5F8: Box PKMN data start
+0x1252F : Box PKMN data end
+
+
+
+
+0x134DC: Custom Pass 1 Start
+0x134DC: Custom Pass 1 Name
+0x134F4 and 0x134F5: Pulls a text string for Custom Pass 1's title?
+0x134F9 : Custom Pass 1 Character Style
+0x134FA : Custom Pass 1 Head
+0x134FB : Custom Pass 1 Hair
+0x134FC : Custom Pass 1 Face
+0x134FD : Custom Pass 1 Top
+0x134FE : Custom Pass 1 Pants
+0x134FF : Custom Pass 1 Shoes
+0x13500 : Custom Pass 1 Hand
+0x13501 : Custom Pass 1 Glasses or Bag
+0x13502 : Custom Pass 1 Badge
+
+
+
+Note: Custom Catchphrases are saved even if a preset one is used. If one hasn't been made, it seems
+to use the last part of an existing text string?
+
+0x13504 : Custom Pass 1 Catchphrase GREETING
+0x13538 : Custom Pass 1 Catchphrase PKMN SENT OUT
+0x13570 : Custom Pass 1 Catchphrase PKMN SHIFT1
+0x132C1 : Custom Pass 1 Catchphrase PKMN SHIFT2
+0x135D8 : Custom Pass 1 Catchphrase WIN
+0x13640 : Custom Pass 1 Catchphrase LOSE
+0x136C6 : Custom Pass 1 Skin Tone
+
+0x13A1C : Custom Pass 1 Design *and* Photo Type. 
+    # i.e. 00 is design 1 with fullbody image, 01 is design 1 with a head shot
+0x13A1D : Custom Pass 1 Pokeball Mark, Probably achievement-related
+
+~0x58163 : Store? (Gear)
+
+# Notes on the store are incomplete.
+
+0x5816C : Summer Cap B (01 -> 03)
+0x5816E : Shiny Yellow (02 -> 06)
+0x58170 : Summer T-Shirt B (10 -> 30)
+0x58172 : Summer Jeans B (40 -> C0)
+0x58177 : Summer Wristband B (00 -> 01)
+0x58175 : Summer Shoes B (01 -> 03)
+0x58178 : Summer Bag B (01 -> 03)
+
+0x5818C : Cool Hat B (01 -> 03)
+0x5818E : Light Brown (02 -> 06)
+0x58190 : Cool Jacket B (10 -> 30)
+
+0x581AD : Blue Gray (40 -> C0)
+0x581B0 : Army Tank Top B (01 -> 03)
+
+0x581D0 : Girls' Minidress (10 -> 30)
+0x581CC : Girl's Cap B (01 -> 03)
+0x581CE : Dark Gray (02 -> 06)
+
+0x581EC : Cool Cap B (01 -> 03)
+0x581F0 : Cool Tank Top B (10 -> 30)
+
+0x5820C : Cute Headband B (01 -> 03)
+0x5820E : Orange (02 -> 06)
+0x58210 : Cute Dress B (10 -> 30)

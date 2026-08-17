@@ -7,3 +7,47 @@ r0 is the bit for the colosseum that's gonna be unlocked and r3 is the current s
 r30 is how many times to shift 0x1 to reach the bit for the new colosseum, and r29+r4 is the address for the bitfields
 This function seems to be a general function used for many things beyond just unlocking Colosseums.
 Maybe it's a general bitfield writing function?
+
+-- my madman's notes on FUN_8016746c which may be illegible --
+
+r0 = lr
+r30 = param 1
+r28 = param 2
+r27 = param 3
+
+r29 = 80625174
+
+r4 = param 1
+r3 = r29 + 0x44 = 806251b8
+
+r3 = value in 806251b8 = 91c0d820
+
+r0 = param 1 * 0xC
+
+r3 = value in 0x0010(r3) + r0
+
+r3 = value in 0x0008(r3) = 01
+
+r31 = 91a2f4ac
+rlwinm    r31, r3, 0, 24, 31 (000000ff)
+r31 = 0x1
+
+r3 = r29 + 0x44 = 806251b8
+
+r3 = value in 0x0010(r3) + r0
+
+r3 = 0x0004(r3) = 0x196
+
+rlwinm    r27, r3, 27, 5, 31 (ffffffe0)
+rlwinm    r30, r3, 0, 27, 31 (0000001f)
+
+r4 = 0x80460000
+r3 = 0x00070000
+
+r4 = -0x2180(r4) = 0x918f6d40
+
+-- stuff I didn't write down (my brain was melting) --
+
+r4 = 0x918f6d40
+rlwinm    r4, r27, 2, 0, 29 (3fffffff) = 0x00000030
+r29 = current save slot + 0x124D8

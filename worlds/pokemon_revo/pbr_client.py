@@ -37,11 +37,14 @@ CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
 # Note: It is NOT the actual starting address of the save file.
 SAVE_FILE_FIND_ADDR = 0x8045DE80
 
-# The offset between the start of the save file and every save profile past the first one.
-SAVE_SLOT_OFFSET = 0x6FF00
-
 # The offset for the address that contains the currently loaded save profile's index.
 SAVE_SLOT_CURRENT = 0x50
+
+# The offset from the start of the save file to the first profile.
+SAVE_SLOT_START = 0x380
+
+# The offset from the first save profile to every one past it.
+SAVE_SLOT_OFFSET = 0x6FF00
 
 # The expected index for the following item that should be received.
 # TODO: Find a proper address for this.
@@ -58,11 +61,11 @@ BADGE_COUNT = 0x80000008
 # Offsets for the unlocked Colosseums bitfields.
 # Flag 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
 # Flag 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
-COLOSSEUMS_FLAG_1 = 0x12889
-COLOSSEUMS_FLAG_2 = 0x12888
+COLOSSEUMS_FLAG_1 = 0x12508
+COLOSSEUMS_FLAG_2 = 0x12508
 
 # Offset for Player's Poké Coupons.
-POKE_COUPONS = 0x12861
+POKE_COUPONS = 0x124E1
 
 
 class PBRCommandProcessor(ClientCommandProcessor):
@@ -214,9 +217,9 @@ def find_save_file_address():
     """
     Finds the starting address of the current profile in memory.
     """
-    save_file_start = read_word(SAVE_FILE_FIND_ADDR)
+    save_file = read_word(SAVE_FILE_FIND_ADDR)
     return (
-        save_file_start + dolphin_memory_engine.read_byte(save_file_start + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET
+        save_file + dolphin_memory_engine.read_byte(save_file + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET + SAVE_SLOT_START
     )
 
 

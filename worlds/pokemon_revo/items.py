@@ -43,12 +43,12 @@ ITEM_TABLE: dict[str, PBRItemData] = {
 
     "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_deprioritized, 10, None, None),
 
-    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 11, 0x23DB9, None),
-    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 12, 0x244A5, None),
-    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 13, 0x24B91, None),
-    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 14, 0x2527D, None),
-    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 15, 0x25969, None),
-    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.useful, 16, 0x26055, None),
+    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 11, 0x23A39, None),
+    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 12, 0x24125, None),
+    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 13, 0x24811, None),
+    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 14, 0x24EFD, None),
+    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 15, 0x255E9, None),
+    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.useful, 16, 0x25CD5, None),
 
     "100 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 17, 0x64,  None),
     "200 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 18, 0xC8,  None),

@@ -2,11 +2,14 @@
 Is run once a Colosseum is beaten
 Writes into addresses 91979248-9197924B, which contain both Colosseum unlock bitfields
 
-FUN_8016746c unlocks new Colosseums, and is called at 80139ec4
+FUN_8016746c unlocks new Colosseums, and is called at 80139ec4 for Waterfall's unlock
 r0 is the bit for the colosseum that's gonna be unlocked and r3 is the current state of the flags
 r30 is how many times to shift 0x1 to reach the bit for the new colosseum, and r29+r4 is the address for the bitfields
 This function seems to be a general function used for many things beyond just unlocking Colosseums.
 Maybe it's a general bitfield writing function?
+
+FUN_800e7f24 unlocks new Rental Passes
+800d2034 calls the unlock for starter pass (atleast for cyndy)
 
 -- my madman's notes on FUN_8016746c which may be illegible --
 
@@ -24,9 +27,9 @@ r3 = value in 806251b8 = 91c0d820
 
 r0 = param 1 * 0xC
 
-r3 = value in 0x0010(r3) + r0
+r3 = value in 0x0010(r3) + r0 = 91c0d850 + r0 
 
-r3 = value in 0x0008(r3) = 01
+r3 = value in 0x0008(r3)
 
 r31 = 91a2f4ac
 rlwinm    r31, r3, 0, 24, 31 (000000ff)
@@ -51,3 +54,5 @@ r4 = -0x2180(r4) = 0x918f6d40
 r4 = 0x918f6d40
 rlwinm    r4, r27, 2, 0, 29 (3fffffff) = 0x00000030
 r29 = current save slot + 0x124D8
+
+Byte to turn on = 0x1 shifted left by (bits 27-31 of the value in (save file start address + 0x316B10) + param1 * 12 + 0x4)

@@ -58,11 +58,10 @@ EXPECTED_INDEX_ADDR = 0x80000006
 # TODO: Find a proper address for this.
 BADGE_COUNT = 0x80000008
 
-# Offsets for the unlocked Colosseums bitfields.
-# Flag 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
-# Flag 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
-COLOSSEUMS_FLAG_1 = 0x12508
-COLOSSEUMS_FLAG_2 = 0x12508
+# Offset for the unlocked Colosseums bitfield.
+# Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
+# Byte 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
+COLOSSEUMS_BITFIELD = 0x12508
 
 # Offset for Player's Poké Coupons.
 POKE_COUPONS = 0x124E1
@@ -235,20 +234,13 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
         return False
 
     save_file_address = find_save_file_address()
-    colo_flag_1_value = dolphin_memory_engine.read_byte(save_file_address + COLOSSEUMS_FLAG_1)
-    colo_flag_2_value = dolphin_memory_engine.read_byte(save_file_address + COLOSSEUMS_FLAG_2)
+    colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
     poke_coupons_value = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + POKE_COUPONS, 3))
 
     match ITEM_TABLE[item_name].group:
-        case "Colosseum Set 1":
-            if not bool((colo_flag_1_value >> ITEM_TABLE[item_name].bit) & 1):
-                dolphin_memory_engine.write_byte(save_file_address + COLOSSEUMS_FLAG_1,
-                                                 colo_flag_1_value + ITEM_TABLE[item_name].value)
-            return True
-        case "Colosseum Set 2":
-            if not bool((colo_flag_2_value >> ITEM_TABLE[item_name].bit) & 1):
-                dolphin_memory_engine.write_byte(save_file_address + COLOSSEUMS_FLAG_2,
-                                                 colo_flag_2_value + ITEM_TABLE[item_name].value)
+        case "Colosseums":
+            if not bool((colo_flag_value >> ITEM_TABLE[item_name].bit) & 1):
+                write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + ITEM_TABLE[item_name].value)
             return True
         case "Rental Passes":
             rental_pass_value = dolphin_memory_engine.read_byte(save_file_address + ITEM_TABLE[item_name].value)
@@ -341,11 +333,11 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
     Checks if the condition to unlock Stargazer Colosseum has been met.
     """
     save_file_address = find_save_file_address()
-    colo_flag_2_value = dolphin_memory_engine.read_byte(save_file_address + COLOSSEUMS_FLAG_2)
+    colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
     badge_hunt_req = False
     colosseum_clear_req = False
 
-    if not bool((colo_flag_2_value >> 5) & 1):
+    if not bool((colo_flag_value >> 13) & 1):
         if ctx.slot_data["goal_unlock_method"] != 1:
             current_badge_count = dolphin_memory_engine.read_byte(BADGE_COUNT)
             if current_badge_count >= ctx.slot_data["required_badge_amount"]:
@@ -363,8 +355,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             (ctx.slot_data["goal_unlock_method"] == 1 and colosseum_clear_req) or
             (ctx.slot_data["goal_unlock_method"] == 2 and badge_hunt_req and colosseum_clear_req)
         ):
-            dolphin_memory_engine.write_byte(save_file_address + COLOSSEUMS_FLAG_2,
-                                             colo_flag_2_value + 0x20)
+            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + 0x2000)
 
 
 def check_ingame() -> bool:

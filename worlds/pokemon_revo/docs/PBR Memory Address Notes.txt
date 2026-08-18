@@ -24,7 +24,7 @@ Courtyard Colosseum Clears: 0x124F9
 Sunset Colosseum Clears: 0x124F8
 Stargazer Colosseum Clears: 0x124FF
 
-Colosseum Unlock Bitfield 1: 0x12508
+Colosseum Unlock Bitfield 1: 0x12509
 Colosseum Unlock Bitfield 2: 0x12508
 Post Game Flag: 0x12511
 

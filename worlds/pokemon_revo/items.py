@@ -30,16 +30,16 @@ class PBRItem(Item):
 
 
 ITEM_TABLE: dict[str, PBRItemData] = {
-    "Gateway Colosseum":     PBRItemData("Colosseum Set 1", ItemClassification.progression, 1,  0x10, 4),
-    "Main Street Colosseum": PBRItemData("Colosseum Set 1", ItemClassification.progression, 2,  0x20, 5),
-    "Waterfall Colosseum":   PBRItemData("Colosseum Set 1", ItemClassification.progression, 3,  0x40, 6),
-    "Neon Colosseum":        PBRItemData("Colosseum Set 1", ItemClassification.progression, 4,  0x80, 7),
-    "Crystal Colosseum":     PBRItemData("Colosseum Set 2", ItemClassification.progression, 5,  0x01, 0),
-    "Sunny Park Colosseum":  PBRItemData("Colosseum Set 2", ItemClassification.progression, 6,  0x02, 1),
-    "Magma Colosseum":       PBRItemData("Colosseum Set 2", ItemClassification.progression, 7,  0x04, 2),
-    "Courtyard Colosseum":   PBRItemData("Colosseum Set 2", ItemClassification.progression, 8,  0x08, 3),
-    "Sunset Colosseum":      PBRItemData("Colosseum Set 2", ItemClassification.progression, 9,  0x10, 4),
-   #"Stargazer Colosseum":   PBRItemData("Colosseum Set 2", ItemClassification.progression, 10, 0x20, 5),
+    "Gateway Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 1,  0x0010, 4),
+    "Main Street Colosseum": PBRItemData("Colosseums", ItemClassification.progression, 2,  0x0020, 5),
+    "Waterfall Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 3,  0x0040, 6),
+    "Neon Colosseum":        PBRItemData("Colosseums", ItemClassification.progression, 4,  0x0080, 7),
+    "Crystal Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 5,  0x0100, 8),
+    "Sunny Park Colosseum":  PBRItemData("Colosseums", ItemClassification.progression, 6,  0x0200, 9),
+    "Magma Colosseum":       PBRItemData("Colosseums", ItemClassification.progression, 7,  0x0400, 10),
+    "Courtyard Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 8,  0x0800, 11),
+    "Sunset Colosseum":      PBRItemData("Colosseums", ItemClassification.progression, 9,  0x1000, 12),
+   #"Stargazer Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 10, 0x2000, 13),
 
     "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_deprioritized, 10, None, None),
 
@@ -140,7 +140,5 @@ item_name_groups = {
     "Poké Coupons": set(),
 }
 for item in ITEM_TABLE:
-    if "Colosseum" in ITEM_TABLE[item].group:
-        item_name_groups["Colosseums"].add(item)
-    elif ITEM_TABLE[item].group in item_name_groups:
+    if ITEM_TABLE[item].group in item_name_groups:
         item_name_groups[ITEM_TABLE[item].group].add(item)

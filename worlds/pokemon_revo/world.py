@@ -12,7 +12,7 @@ from .locations import LOCATION_TABLE
 class PBRWorld(World):
     """
     Pokémon Battle Revolution is the series' first game on the Wii. Battle through 10 different Colosseums
-    on your way to the rank of Pokétopia Master, all in the series' famous turn-based battles!
+    on your way to the rank of Pokétopia Master, all in the mainline games' famous turn-based battles!
     """
 
     game = "Pokémon Battle Revolution"

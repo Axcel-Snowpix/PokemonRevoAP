@@ -73,39 +73,73 @@ Save Slot Data
 0x5F8: Box PKMN data start
 0x1252F : Box PKMN data end
 
+///
 
+0x134D8 - Start of Custom Pass 1
+0x13BC4 - Start of Custom Pass 2
+0x142B0 - Start of Custom Pass 3
+0x1499C - Start of Custom Pass 4
+0x15088 - Start of Custom Pass 5
+0x15774 - Start of Custom Pass 6
+0x15E60 - Start of Custom Pass 7
+0x1654C - Start of Custom Pass 8
+0x16C38 - Start of Custom Pass 9
+0x17324 - Start of Custom Pass 10
+0x17A10 - Start of Custom Pass 11
+0x180FC - Start of Custom Pass 12 
+0x187E8 - Start of Custom Pass 13
+0x18ED4 - Start of Custom Pass 14
+0x195C0 - Start of Custom Pass 15
+0x19CAC - Start of Custom Pass 16
+0x1A398 - Start of Custom Pass 17
+0x1AA84 - Start of Custom Pass 18
+0x1B170 - Start of Custom Pass 19
+0x1B85C - Start of Custom Pass 20
+0x1BF48 - Start of Custom Pass 21
+0x1C634 - Start of Custom Pass 22 
+0x1CD20 - Start of Custom Pass 23
+0x1D40C - Start of Custom Pass 24
+0x1DAF8 - Start of Custom Pass 25
+0x1E1E4 - Start of Custom Pass 26
+0x1E8D0 - Start of Custom Pass 27
+0x1EFBC - Start of Custom Pass 28
+0x1F6A8 - Start of Custom Pass 29
+0x1FD94 - Start of Custom Pass 30
+0x20480 - Start of Custom Pass 31
+0x20B6C - Start of Custom Pass 32
+0x21258 - Start of Custom Pass 33
+0x21944 - Start of Custom Pass 34
+0x22030 - Start of Custom Pass 35
+0x2271C - Start of Custom Pass 36
+0x22E08 - Start of Custom Pass 37
 
+///
 
-0x134DC: Custom Pass 1 Start
-0x134DC: Custom Pass 1 Name
-0x134F4 and 0x134F5: Pulls a text string for Custom Pass 1's title?
-0x134F9 : Custom Pass 1 Character Style
-0x134FA : Custom Pass 1 Head
-0x134FB : Custom Pass 1 Hair
-0x134FC : Custom Pass 1 Face
-0x134FD : Custom Pass 1 Top
-0x134FE : Custom Pass 1 Pants
-0x134FF : Custom Pass 1 Shoes
-0x13500 : Custom Pass 1 Hand
-0x13501 : Custom Pass 1 Glasses or Bag
-0x13502 : Custom Pass 1 Badge
+Contents of Custom Pass
+0x004 : Pass Trainer Name
+0x01C : 2 bytes, pulls text string for trainer title
+0x021 : Character Style
+0x022 : Gear (Head)
+0x023 : Gear (Hair)
+0x024 : Gear (Face)
+0x025 : Gear (Top)
+0x026 : Gear (Pants)
+0x027 : Gear (Shoes)
+0x028 : Gear (Hand)
+0x029 : Gear (Glasses / Bag)
+0x02A : Gear (Badge)
+0x02C : Catchphrase GREETING
+0x060 : Catchphrase PKMN SENT OUT
+0x098 : Catchphrase PKMN SHIFT1
+0x0CC : Catchphrase PKMN SHIFT2
+0x100 : Catchphrase WIN
+0x168 : Catchphrase LOSE
+0x1EE : Skin Tone
+0x544 : Pass Design *and* Photo Type.
+ # i.e. 00 is design 1 with fullbody image, 01 is design 1 with a head shot
+0x545 : Pokeball Mark (0x545 : bitflag, 0x80 = Pokeball Mark (Sparkly) / 0x40 locked rental pass)
 
-
-
-Note: Custom Catchphrases are saved even if a preset one is used. If one hasn't been made, it seems
-to use the last part of an existing text string?
-
-0x13504 : Custom Pass 1 Catchphrase GREETING
-0x13538 : Custom Pass 1 Catchphrase PKMN SENT OUT
-0x13570 : Custom Pass 1 Catchphrase PKMN SHIFT1
-0x132C1 : Custom Pass 1 Catchphrase PKMN SHIFT2
-0x135D8 : Custom Pass 1 Catchphrase WIN
-0x13640 : Custom Pass 1 Catchphrase LOSE
-0x136C6 : Custom Pass 1 Skin Tone
-
-0x13A1C : Custom Pass 1 Design *and* Photo Type. 
-    # i.e. 00 is design 1 with fullbody image, 01 is design 1 with a head shot
-0x13A1D : Custom Pass 1 Pokeball Mark, Probably achievement-related
+///
 
 ~0x58163 : Store? (Gear)
 

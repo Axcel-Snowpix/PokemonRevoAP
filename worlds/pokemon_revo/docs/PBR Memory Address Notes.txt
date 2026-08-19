@@ -68,6 +68,25 @@ Save Slot Data
 0x42: sub_region_id (uint16_t, ie: California)
 0x48: self_introduction[50] (wchar_t, might be slightly longer, but unused in english)
 
+0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)
+0x80627336 (byte) - The Save Slot To Save The Bits For? At the very least when initing.
+0x800e6d58 - InitAllBattlePasses (func)
+0x80629880 (8 bytes, double) - The Initial Play Time Value (0, duh)
+0x800566A0 - Does nothing, but takes a save_slot_idx. Probably defunct debug function. (func)
+0x801673C8 - Does something to init bit flags for save_slot_idx using the table above. (func)
+0x80166b84 - Does something to init bit flags for save_slot_idx using the table above. (func)
+
+0x801673C8, 0x80166b84 unclear to me how these functions are different? Yes, one has an extra check, but the previous one has a loop with no check so should it not already be handled by the first loop? 
+0x806251b8 may hold the values to initialize the bitfield with but it's hard to tell for...
+BITFLAG_TABLE
+0x0 - Number of Bitflags (0x28D)
+0x10 - Pointer To Bitflags Init Value Entries? (In my testing this has always been a pointer BITFLAG_TABLE + 0x30, but not sure if that is guaranteed) 
+BITFLAG_TABLE_ENTRY (Each Entry is 0xC in Size)
+0x0 (word) is the initial value to set the flag to I believe (unsurprisingly, most are initalized to 0)
+0x4 (word) is related to the offset of the flag? 
+0x8 (byte) is the size in bits possibly?
+0x9 (byte) if true, does something after init in FUN_801673C8 to init again?
+
 (SAVE DATA POINTER OFFSETS (-380) )
 
 0x5F8: Box PKMN data start

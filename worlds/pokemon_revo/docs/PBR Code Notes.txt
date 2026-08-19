@@ -15,7 +15,34 @@ Colosseum Unlock Calls:
 FUN_800e7f24 unlocks new Rental Passes
 800d2034 calls the unlock for starter pass (atleast for cyndy)
 
--- my madman's notes on FUN_8016746c which may be illegible --
+Fresh Save Documentation
+
+227 bits are not 0 before file is made
+107 bits are changed when 'New Game' is pressed.
+
+As soon as file name is inputted:
+0x010 : Name is set
+0x030 : Birth month is set to "??"
+0x038 : Birth day is set to "??"
+0x040 : Region ID is set to 00 DC
+
+0x12510 : becomes 75 00 00 00 9A 3E 80 50 00 7F F1 CA (non-00 values seem to be random each time i perform this action)
+
+Nothing seems to change during either cutscene
+
+By the time Anna introduces herself:
+0x00004 : (from null) 40 17 7D 2F 1A A0
+0x124DC : set to 02 02
+
+When first rental pass screen is loaded, all Rental
+Passes are copied into the save data.
+
+After choosing Cydney's rental pass:
+0x124DD : 02
+0x125B7 : 10
+0x23A39 : 58
+
+-- Axcel's madman's notes on FUN_8016746c which may be illegible --
 
 r0 = lr
 r30 = param 1

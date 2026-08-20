@@ -170,3 +170,82 @@ Contents of Custom Pass
 0x5820C : Cute Headband B (01 -> 03)
 0x5820E : Orange (02 -> 06)
 0x58210 : Cute Dress B (10 -> 30)
+
+///
+
+#MOVE LATER FOR ORGANIZATION?
+
+As soon as file name is inputted:
+0x010 : Name is set
+0x030 : Birth month is set to "??"
+0x038 : Birth day is set to "??"
+0x040 : Region ID is set to 00 DC
+
+0x12510 : becomes 75 00 00 00 9A 3E 80 50 00 7F F1 CA (non-00 values seem to be random each time i perform this action)
+
+Nothing seems to change during either cutscene
+
+By the time Anna introduces herself:
+0x00004 : (from null) 40 17 7D 2F 1A A0
+0x124DC : set to 02 02
+
+When first rental pass screen is loaded, all Rental
+Passes are copied into the save data.
+
+After choosing Cydney's rental pass:
+0x124DD : 02
+0x125B7 : 10
+0x23A39 : 58
+
+0x124E0 : Marks that (i fucking ctrl+z'd and lost what this was)
+
+0x15CB8 : Marks the design of pass unlocked by 0x15CB9? Changes to 01 when pass design is used?
+0x15CB9 : Marks if pass at 0x15CB8 is unlocked?
+
+Upon starting first battle in Gateway Colluseum using Nate's rental pass:
+
+803 bits changed (5 are play time)
+
+0x58605 : bytes here might track colluseum progress?
+byte set to 01 upon starting match, with the neighboring
+one set to 00 (from FF)
+
+0x5DD4C : game does a BUNCH of shit here post winning match 1
+
+0x5DD4C : 4 bytes change immediately upon opponent's final pkmn returning to ball
+0x5DD4C : 4 bytes change AGAIN immediately before 'YOU WIN'
+
+Game seems to remove your unselected PKMN'd data from the battle pass in memory. Replaces it
+when the battle 
+
+0xC79FC : Game seems to store previous opponent's PKMN here after winning a battle (upon 'YOU WIN!' text appearance)
+
+After beating Gateway for the first time
+0x4B8B0 : Joe's Battle Pass information is stored here (PIDs rerolled? imagine it being shiny lmao)
+0x125B7 : Gateway Colosseum Clears (00 -> 01) 
+0x124F0 : (00 -> 01)
+0x124FD : (00 -> 01)
+0x1251F : (00 -> 80)
+0x12579 : Bronze Badge? (00 -> 05), then immediately (05 -> 06)
+0x12581 : Also Bronze Badge? (00 -> 50), then immediately (50 -> 60)
+
+After beating Main Street for the first time
+0x1250B : (01 -> 05)
+0x12568 : (00 -> 20)
+0x124F7 : (00 -> 01)
+0x124FC : (00 -> 01)
+0x12509 : (30 -> 70)
+0x1251D : (00 -> 80)
+0x12579 : (06 -> 56) -> PIKACHU badge -> (56 -> A6)
+0x1258C : (00 -> 04) -> PIKACHU badge -> (04 -> 08)
+0x1259C : (00 -> 01) -> News from Poketopia -> (01 -> 02)
+0x4CD74 : Taylor's Battle Pass info here WHY tho???
+
+(Told: Unlocked PIKACHU badge, new battle pass, and waterfall colosseum)
+
+Upon entering menu after "transfering PKMN from DS":
+0x12579 : (A6 -> AA)
+0x12581 : (60 -> A0)
+0x155CD : (00 -> 08)
+0x19B05 : (00 -> 08)
+0x58600 : (02 -> 14) 

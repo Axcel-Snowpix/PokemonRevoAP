@@ -47,16 +47,14 @@ SAVE_SLOT_START = 0x380
 SAVE_SLOT_OFFSET = 0x6FF00
 
 # The expected index for the following item that should be received.
-# TODO: Find a proper address for this.
-EXPECTED_INDEX_ADDR = 0x80000006
+EXPECTED_INDEX_OFFSET = 0x68531
 
 # The address containing the slot name, used for server authentication.
 # TODO: Find a proper address for this, then reimplement automatic server authentication.
 # SLOT_NAME_ADDR = 0x80000006
 
-# The address containg the player's Pokétopia Badges.
-# TODO: Find a proper address for this.
-BADGE_COUNT = 0x80000008
+# The offset containing the player's Pokétopia Badges.
+BADGE_COUNT = 0x68533
 
 # Offset for the unlocked Colosseums bitfield.
 # Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
@@ -256,11 +254,11 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
                                                  (poke_coupons_value + ITEM_TABLE[item_name].value).to_bytes(3, byteorder="big"))
             return True
         case "Macguffin":
-            current_badge_count = dolphin_memory_engine.read_byte(BADGE_COUNT)
+            current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
             # The player should never need more than 255 badges to goal, so getting past that number is unecessary.
             if current_badge_count < 0xFF:
                 current_badge_count += 0x1
-                dolphin_memory_engine.write_byte(BADGE_COUNT, current_badge_count)
+                dolphin_memory_engine.write_byte(save_file_address + BADGE_COUNT, current_badge_count)
             return True
     # If unable to place the item in the array, return `False`.
     return False
@@ -273,9 +271,11 @@ async def give_items(ctx: PBRContext) -> None:
     :param ctx: Pokémon Battle Revolution client context.
     """
     if check_ingame():
+        save_file_address = find_save_file_address()
+
         # Read the expected index of the player, which is the index of the next item they're expecting to receive.
         # The expected index starts at 0 for a fresh save file.
-        expected_idx = read_short(EXPECTED_INDEX_ADDR)
+        expected_idx = read_short(save_file_address + EXPECTED_INDEX_OFFSET)
 
         # Check if there are new items.
         received_items = ctx.items_received
@@ -292,7 +292,7 @@ async def give_items(ctx: PBRContext) -> None:
                 await asyncio.sleep(0.01)
 
             # Increment the expected index.
-            write_short(EXPECTED_INDEX_ADDR, idx + 1)
+            write_short(save_file_address + EXPECTED_INDEX_OFFSET, idx + 1)
 
 
 async def check_locations(ctx: PBRContext) -> None:
@@ -307,11 +307,11 @@ async def check_locations(ctx: PBRContext) -> None:
     save_file_address = find_save_file_address()
 
     # Loop through all locations to see if each has been checked.
-    for location in LOCATION_TABLE:
+    for location, data in LOCATION_TABLE.items():
         checked = False
-        if LOCATION_TABLE[location].group == "Colosseum Clears":
-            colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + LOCATION_TABLE[location].offset)
-            if colosseum_clears_value > 0x0:
+        if data.group == "Colosseum Clears":
+            colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+            if colosseum_clears > 0x0:
                 checked = True
 
         if checked:
@@ -320,7 +320,7 @@ async def check_locations(ctx: PBRContext) -> None:
                     await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                     ctx.finished_game = True
             else:
-                ctx.locations_checked.add(LOCATION_TABLE[location].code)
+                ctx.locations_checked.add(data.code)
 
     # Send the list of newly-checked locations to the server.
     locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
@@ -339,15 +339,15 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
 
     if not bool((colo_flag_value >> 13) & 1):
         if ctx.slot_data["goal_unlock_method"] != 1:
-            current_badge_count = dolphin_memory_engine.read_byte(BADGE_COUNT)
+            current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
             if current_badge_count >= ctx.slot_data["required_badge_amount"]:
                 badge_hunt_req = True
         if ctx.slot_data["goal_unlock_method"] != 0:
-            for location in LOCATION_TABLE:
-                if LOCATION_TABLE[location].group == "Colosseum Clears":
-                    colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + LOCATION_TABLE[location].offset)
-                    if colosseum_clears_value > 0x0 and LOCATION_TABLE[location].region not in ctx.colosseums_cleared:
-                        ctx.colosseums_cleared.append(LOCATION_TABLE[location].region)
+            for location, data in LOCATION_TABLE.items():
+                if data.group == "Colosseum Clears":
+                    colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+                    if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
+                        ctx.colosseums_cleared.append(data.region)
             if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
                 colosseum_clear_req = True
         if (

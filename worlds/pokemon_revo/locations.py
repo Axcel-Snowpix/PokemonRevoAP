@@ -69,16 +69,12 @@ def create_all_locations(world: PBRWorld) -> None:
 
 
 def create_locations(world: PBRWorld) -> None:
-    for location in LOCATION_TABLE:
-        if LOCATION_TABLE[location].code == None:
-            region = world.get_region(LOCATION_TABLE[location].region)
+    for location, data in LOCATION_TABLE.items():
+        if data.code == None:
+            region = world.get_region(data.region)
             region.add_event(
                 location, "Victory", location_type=PBRLocation, item_type=items.PBRItem
             )
-        elif LOCATION_TABLE[location].group == "Rental Pass Checks":
-            if world.options.randomize_rental_passes:
-                region = world.get_region(LOCATION_TABLE[location].region)
-                region.add_locations({location: LOCATION_TABLE[location].code}, PBRLocation)
-        else:
-            region = world.get_region(LOCATION_TABLE[location].region)
-            region.add_locations({location: LOCATION_TABLE[location].code}, PBRLocation)
+        elif data.group != "Rental Pass Checks" or world.options.randomize_rental_passes:
+            region = world.get_region(data.region)
+            region.add_locations({location: data.code}, PBRLocation)

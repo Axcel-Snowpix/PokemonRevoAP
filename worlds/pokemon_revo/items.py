@@ -109,20 +109,20 @@ def create_all_items(world: PBRWorld) -> None:
     else:
         starting_colosseums = ["Gateway Colosseum", "Main Street Colosseum"]
 
-    for item in ITEM_TABLE:
-        if "Colosseum" in ITEM_TABLE[item].group:
+    for item, data in ITEM_TABLE.items():
+        if data.group == "Colosseums":
             if item in starting_colosseums:
                 world.push_precollected(world.create_item(item))
             else:
                 itempool.append(world.create_item(item))
-        elif ITEM_TABLE[item].group == "Rental Passes":
+        elif data.group == "Rental Passes":
             if world.options.randomize_rental_passes:
                 starter_pass_check = item.lower().removesuffix("'s rental pass")
                 if not world.options.starting_rental_pass == starter_pass_check:
                     itempool.append(world.create_item(item))
                 else:
                     world.push_precollected(world.create_item(item))
-        elif ITEM_TABLE[item].group == "Macguffin":
+        elif data.group == "Macguffin":
             if world.options.goal_unlock_method == "badge_hunt" or world.options.goal_unlock_method == "both":
                 for _ in range(0,world.options.total_badge_amount):
                     itempool.append(world.create_item(item))
@@ -139,6 +139,6 @@ item_name_groups = {
     "Rental Passes": set(),
     "Poké Coupons": set(),
 }
-for item in ITEM_TABLE:
-    if ITEM_TABLE[item].group in item_name_groups:
-        item_name_groups[ITEM_TABLE[item].group].add(item)
+for item, data in ITEM_TABLE.items():
+    if data.group in item_name_groups:
+        item_name_groups[data.group].add(item)

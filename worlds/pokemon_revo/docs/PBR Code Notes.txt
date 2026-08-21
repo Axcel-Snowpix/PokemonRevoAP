@@ -12,13 +12,63 @@ Colosseum Unlock Calls:
 8016739c = Gateway and Main Street Unlock (This gets run a on loop until r29 (and consequently, r3) equal to 0x28d for some reason)
 80139ec4 = Waterfall Unlock
 
+
 FUN_800e7f24 unlocks new Rental Passes
 800d2034 calls the unlock for starter pass (atleast for cyndy)
 
-Fresh Save Documentation
+FUN_800e7ce8 does various things related to rental passes, depending on its parameters
+most notably, it counts how many rental passes pass a certain condition, such as being in gateway or being unlocked
+param1 = 12 & param2 = -1: Checks if a rental pass is in Gateway (so if bit 3 is checked, but not bit 4)
 
-227 bits are not 0 before file is made
-107 bits are changed when 'New Game' is pressed.
+Addresses that check if a rental pass is in Gateway:
+	800c8b08
+	800e7e60
+	800dccd4
+	800c8930
+
+800cdbd4 may be starting rental pass call? probably not
+
+
+0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)
+0x80627336 (byte) - The Save Slot To Save The Bits For? At the very least when initing.
+0x800e6d58 - InitAllBattlePasses (func)
+0x80629880 (8 bytes, double) - The Initial Play Time Value (0, duh)
+0x800566A0 - Does nothing, but takes a save_slot_idx. Probably defunct debug function. (func)
+0x801673C8 - Does something to init bit flags for save_slot_idx using the table above. (func)
+0x80166b84 - Does something to init bit flags for save_slot_idx using the table above. (func)
+
+0x801673C8, 0x80166b84 unclear to me how these functions are different? Yes, one has an extra check, but the previous one has a loop with no check so should it not already be handled by the first loop? 
+0x806251b8 may hold the values to initialize the bitfield with but it's hard to tell for...
+BITFLAG_TABLE
+0x0 - Number of Bitflags (0x28D)
+0x10 - Pointer To Bitflags Init Value Entries? (In my testing this has always been a pointer BITFLAG_TABLE + 0x30, but not sure if that is guaranteed) 
+BITFLAG_TABLE_ENTRY (Each Entry is 0xC in Size)
+0x0 (word) is the initial value to set the flag to I believe (unsurprisingly, most are initialized to 0)
+0x4 (word) is related to the offset of the flag? 
+0x8 (byte) is the size in bits possibly?
+0x9 (byte) if true, does something after init in FUN_801673C8 to init again?
+
+
+The word at 91c0f4dc + 0x4 is read on loop at many points in the game
+It is read by FUN_8039a298, which is called at 801675f8
+
+The byte at 91c0f4dc + 0x8 is read on loop at many points in the game
+It is read by FUN_8039a230, which is called at 801675e8
+
+The word at 91c0d898 + 0x4 is read during the intro movie showcasing Pokétopia
+It is read by FUN_8039a298, which is called at 801675f8
+
+The byte at 91c0d898 + 0x8 is read during the intro movie showcasing Pokétopia
+It is read by FUN_8039a230, which is called at 801675e8
+
+Various bytes and words are read on loop in Colosseum select menu
+This includes:
+91c0dae4, 91c0f4dc, 91c0da84, 91c0da90, 91c0da9c, 91c0daa8, 91c0dacc,
+91c0dac0, 91c0dad8, 91c0dab4, 91c0da6c, 91c0dafc, 91c0d8f8, 91c0da78,
+91c0d904
+
+
+Fresh Save File Documentation
 
 As soon as file name is inputted:
 0x010 : Name is set
@@ -42,42 +92,59 @@ After choosing Cydney's rental pass:
 0x125B7 : 10
 0x23A39 : 58
 
-0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)
-0x80627336 (byte) - The Save Slot To Save The Bits For? At the very least when initing.
-0x800e6d58 - InitAllBattlePasses (func)
-0x80629880 (8 bytes, double) - The Initial Play Time Value (0, duh)
-0x800566A0 - Does nothing, but takes a save_slot_idx. Probably defunct debug function. (func)
-0x801673C8 - Does something to init bit flags for save_slot_idx using the table above. (func)
-0x80166b84 - Does something to init bit flags for save_slot_idx using the table above. (func)
+0x124E0 : Marks that (i fucking ctrl+z'd and lost what this was)
 
-0x801673C8, 0x80166b84 unclear to me how these functions are different? Yes, one has an extra check, but the previous one has a loop with no check so should it not already be handled by the first loop? 
-0x806251b8 may hold the values to initialize the bitfield with but it's hard to tell for...
-BITFLAG_TABLE
-0x0 - Number of Bitflags (0x28D)
-0x10 - Pointer To Bitflags Init Value Entries? (In my testing this has always been a pointer BITFLAG_TABLE + 0x30, but not sure if that is guaranteed) 
-BITFLAG_TABLE_ENTRY (Each Entry is 0xC in Size)
-0x0 (word) is the initial value to set the flag to I believe (unsurprisingly, most are initialized to 0)
-0x4 (word) is related to the offset of the flag? 
-0x8 (byte) is the size in bits possibly?
-0x9 (byte) if true, does something after init in FUN_801673C8 to init again?
+0x15CB8 : Marks the design of pass unlocked by 0x15CB9? Changes to 01 when pass design is used?
+0x15CB9 : Marks if pass at 0x15CB8 is unlocked?
 
-The word at 91c0f4dc + 0x4 is read on loop at many points in the game
-It is read by FUN_8039a298, which is called at 801675f8
+Upon starting first battle in Gateway Colluseum using Nate's rental pass:
 
-The byte at 91c0f4dc + 0x8 is read on loop at many points in the game
-It is read by FUN_8039a230, which is called at 801675e8
+803 bits changed (5 are play time)
 
-The word at 91c0d898 + 0x4 is read during the intro movie showcasing Pokétopia
-It is read by FUN_8039a298, which is called at 801675f8
+0x58605 : bytes here might track colluseum progress?
+byte set to 01 upon starting match, with the neighboring
+one set to 00 (from FF)
 
-The byte at 91c0d898 + 0x8 is read during the intro movie showcasing Pokétopia
-It is read by FUN_8039a230, which is called at 801675e8
+0x5DD4C : game does a BUNCH of shit here post winning match 1
 
-Various bytes and words are read on loop in Colosseum select menu
-This includes:
-91c0dae4, 91c0f4dc, 91c0da84, 91c0da90, 91c0da9c, 91c0daa8, 91c0dacc,
-91c0dac0, 91c0dad8, 91c0dab4, 91c0da6c, 91c0dafc, 91c0d8f8, 91c0da78,
-91c0d904
+0x5DD4C : 4 bytes change immediately upon opponent's final pkmn returning to ball
+0x5DD4C : 4 bytes change AGAIN immediately before 'YOU WIN'
+
+Game seems to remove your unselected PKMN'd data from the battle pass in memory. Replaces it
+when the battle 
+
+0xC79FC : Game seems to store previous opponent's PKMN here after winning a battle (upon 'YOU WIN!' text appearance)
+
+After beating Gateway for the first time
+0x4B8B0 : Joe's Battle Pass information is stored here (PIDs rerolled? imagine it being shiny lmao)
+0x125B7 : Gateway Colosseum Clears (00 -> 01) 
+0x124F0 : (00 -> 01)
+0x124FD : (00 -> 01)
+0x1251F : (00 -> 80)
+0x12579 : Bronze Badge? (00 -> 05), then immediately (05 -> 06)
+0x12581 : Also Bronze Badge? (00 -> 50), then immediately (50 -> 60)
+
+After beating Main Street for the first time
+0x1250B : (01 -> 05)
+0x12568 : (00 -> 20)
+0x124F7 : (00 -> 01)
+0x124FC : (00 -> 01)
+0x12509 : (30 -> 70)
+0x1251D : (00 -> 80)
+0x12579 : (06 -> 56) -> PIKACHU badge -> (56 -> A6)
+0x1258C : (00 -> 04) -> PIKACHU badge -> (04 -> 08)
+0x1259C : (00 -> 01) -> News from Poketopia -> (01 -> 02)
+0x4CD74 : Taylor's Battle Pass info here WHY tho???
+
+(Told: Unlocked PIKACHU badge, new battle pass, and waterfall colosseum)
+
+Upon entering menu after "transfering PKMN from DS":
+0x12579 : (A6 -> AA)
+0x12581 : (60 -> A0)
+0x155CD : (00 -> 08)
+0x19B05 : (00 -> 08)
+0x58600 : (02 -> 14)
+
 
 -- Axcel's madman's notes on FUN_8016746c which may be illegible --
 
@@ -123,4 +190,4 @@ r4 = 0x918f6d40
 rlwinm    r4, r27, 2, 0, 29 (3fffffff) = 0x00000030
 r29 = current save slot + 0x124D8
 
-Byte to turn on = 0x1 shifted left by (bits 27-31 of the value in (save file start address + 0x316B10) + param1 * 12 + 0x4)
+Bit to turn on = 0x1 shifted left by (bits 27-31 of the value in (save file start address + 0x316B10) + param1 * 12 + 0x4)

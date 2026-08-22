@@ -8,26 +8,26 @@ from rule_builder.rules import Has, HasAll, Rule
 if TYPE_CHECKING:
     from .world import PBRWorld
 
+
 def create_and_connect_regions(world: PBRWorld) -> None:
     create_all_regions(world)
     connect_regions(world)
 
 
 def create_all_regions(world: PBRWorld) -> None:
-    menu = Region("Menu", world.player, world.multiworld)
-    gateway_colosseum = Region("Gateway Colosseum", world.player, world.multiworld)
-    main_street_colosseum = Region("Main Street Colosseum", world.player, world.multiworld)
-    waterfall_colosseum = Region("Waterfall Colosseum", world.player, world.multiworld)
-    neon_colosseum = Region("Neon Colosseum", world.player, world.multiworld)
-    crystal_colosseum = Region("Crystal Colosseum", world.player, world.multiworld)
-    sunny_park_colosseum = Region("Sunny Park Colosseum", world.player, world.multiworld)
-    magma_colosseum = Region("Magma Colosseum", world.player, world.multiworld)
-    courtyard_colosseum = Region("Courtyard Colosseum", world.player, world.multiworld)
-    sunset_colosseum = Region("Sunset Colosseum", world.player, world.multiworld)
-    stargazer_colosseum = Region("Stargazer Colosseum", world.player, world.multiworld)
-
-    regions = [menu, gateway_colosseum, main_street_colosseum, waterfall_colosseum, neon_colosseum, crystal_colosseum,
-               sunny_park_colosseum, magma_colosseum, courtyard_colosseum, sunset_colosseum, stargazer_colosseum]
+    regions = [
+        Region("Menu", world.player, world.multiworld),
+        Region("Gateway Colosseum", world.player, world.multiworld),
+        Region("Main Street Colosseum", world.player, world.multiworld),
+        Region("Waterfall Colosseum", world.player, world.multiworld),
+        Region("Neon Colosseum", world.player, world.multiworld),
+        Region("Crystal Colosseum", world.player, world.multiworld),
+        Region("Sunny Park Colosseum", world.player, world.multiworld),
+        Region("Magma Colosseum", world.player, world.multiworld),
+        Region("Courtyard Colosseum", world.player, world.multiworld),
+        Region("Sunset Colosseum", world.player, world.multiworld),
+        Region("Stargazer Colosseum", world.player, world.multiworld),
+    ]
 
     world.multiworld.regions += regions
 

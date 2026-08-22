@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME, PBRItem, PBRItemData
 from .locations import LOCATION_TABLE, PBRLocation
+from .debug import PBRSave, PBR_SAVE_DATA_PTR, PBR_SAVE_SLOT_SIZE, PBR_SAVE_SLOTS_START_OFFSET, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL, PBR_SAVE_SLOT_CURRENT_OFFSET
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -327,6 +328,26 @@ async def check_locations(ctx: PBRContext) -> None:
     if locations_checked:
         await ctx.send_msgs([{"cmd": "LocationChecks", "locations": locations_checked}])
 
+pbr_save_debugger = PBRSave()
+async def run_save_debugger(ctx: PBRContext) -> None:
+    """
+    Grabs and logs changes to the current save file. (Currently, just ALL the save flags).
+
+    :param ctx: Pokémon Battle Revolution client context.
+    """
+    pbr_save_ptr = read_word(PBR_SAVE_DATA_PTR)
+    pbr_save_debugger.set_addr(pbr_save_ptr)
+    pbr_save_debugger.set_save_slot(read_word(pbr_save_ptr + PBR_SAVE_SLOT_CURRENT_OFFSET))
+    pbr_flag_start_ptr : int = pbr_save_debugger.get_save_slot_flags_start_addr()
+    pbr_flag_bytes = dolphin_memory_engine.read_bytes(pbr_flag_start_ptr, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL)
+    pbr_save_debugger.parse_save_slot_flags_from_bytes(pbr_flag_bytes)
+    changes:list[tuple] = pbr_save_debugger.get_save_slot_flag_changes()
+    if changes == []:
+        return
+    
+    for change in changes:
+        logger.info(f"Flag #{change[0]} Changed: {change[1]} -> {change[2]}")
+    
 
 async def check_stargazer_unlock(ctx: PBRContext) -> None:
     """
@@ -396,6 +417,8 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     await give_items(ctx)
                     await check_locations(ctx)
                     await check_stargazer_unlock(ctx)
+                else:
+                    await run_save_debugger(ctx)
                 #else:
                 #    if not ctx.auth:
                 #        ctx.auth = read_string(SLOT_NAME_ADDR, 16)

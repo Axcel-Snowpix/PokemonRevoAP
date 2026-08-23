@@ -8,6 +8,7 @@ PBR_SAVE_SLOT_MAX_CUSTOM_BATTLE_PASSES = 34 # note, there are 3 unused passes?
 PBR_SAVE_SLOT_FLAGS_OFFSET = 0x124D8
 PVR_SAVE_SLOT_NUM_FLAGS = 0x28D
 PBR_SAVE_SLOT_FLAG_BYTE_TOTAL = 0xE6
+PBR_SAVE_SLOT_FLAG_BIT_TOTAL = 0x0000072F
 
 class PBRSave():
     start_addr: int = 0
@@ -41,11 +42,12 @@ class PBRSave():
             return
         self.old_flag_values = self.new_flag_values
         self.new_flag_values = [] #{}
-        all_flags = int.from_bytes(bytes, byteorder="big")
+        # Shift to the right by one since bit 0x72F is unused.
+        all_flags = int.from_bytes(bytes, byteorder="big") >> 1
         for flag, offset_data in PBR_SAVE_SLOT_FLAG_TABLE.items():
-            bitmask = (1 << offset_data[1] - 1) << offset_data[0]
-            flag_value = (all_flags & bitmask) >> offset_data[0]
-            #self.new_flag_values[flag] = flag_value
+            shift_offset = PBR_SAVE_SLOT_FLAG_BIT_TOTAL - offset_data[0] - offset_data[1]
+            bitmask = ((1 << offset_data[1]) - 1) << shift_offset
+            flag_value = (all_flags & bitmask) >> shift_offset
             self.new_flag_values.append(flag_value)
 
     def get_save_slot_flag_changes(self) -> list[tuple]:
@@ -55,14 +57,7 @@ class PBRSave():
         for flag, offset_data in PBR_SAVE_SLOT_FLAG_TABLE.items():
             if self.new_flag_values[flag] != self.old_flag_values[flag]:
                 changes.append((flag, self.old_flag_values[flag], self.new_flag_values[flag]))
-                #changes[i] = (self.old_flag_values[i], self.new_flag_values[i])
         return changes
-        #set_old_flag_values = set(self.old_flag_values.items())
-        #set_new_flag_values = set(self.new_flag_values.items())
-
-        # No, these operation is not symmetric but this is the first way I thought of.
-        #original_changed_values = set_new_flag_values - set_old_flag_values
-        #new_changed_values = set_old_flag_values - set_new_flag_values
         
 
 

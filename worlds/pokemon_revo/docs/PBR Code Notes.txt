@@ -1,16 +1,28 @@
-801675a0: stwx r0,r29,r4
-Is run once a Colosseum is beaten
-Writes into addresses 91979248-9197924B, which contain both Colosseum unlock bitfields
+FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
+It also seems to handle a bunch of other flags
 
-FUN_8016746c unlocks new Colosseums
-r0 is the bit for the colosseum that's gonna be unlocked and r3 is the current state of the flags
-r30 is how many times to shift 0x1 to reach the bit for the new colosseum, and r29+r4 is the address for the bitfields
-This function seems to be a general function used for many things beyond just unlocking Colosseums.
-Maybe it's a general bitfield writing function?
+Colosseum Unlock Flag IDs
+0x2d = Gateway Colosseum
+0x2e = Main Street Colosseum
+0x2f = Waterfall Colosseum
+0x30 = Neon Colosseum
+0x31 = Crystal Colosseum
+0x32 = Sunny Park Colosseum
+0x33 = Magma Colosseum
+0x34 = Courtyard Colosseum
+0x35 = Sunset Colosseum
+0x36 = Stargazer Colosseum
 
 Colosseum Unlock Calls:
-8016739c = Gateway and Main Street Unlock (This gets run a on loop until r29 (and consequently, r3) equal to 0x28d for some reason)
+InitSaveSlotFlags = Gateway and Main Street Unlock
 80139ec4 = Waterfall Unlock
+80139f04 = Neon Unlock
+80139f14 = Crystal Unlock
+80139f84 = Sunny Park Unlock
+80139fd4 = Magma Unlock
+80139fe4 = Sunset Unlock
+8013a054 = Courtyard Unlock
+8013a0a4 = Stargazer Unlock
 
 
 FUN_800e7f24 unlocks new Rental Passes

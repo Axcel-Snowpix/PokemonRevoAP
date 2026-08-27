@@ -1,3 +1,5 @@
+Bit flag table is in common 0017.bin
+
 FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
 It also seems to handle a bunch of other flags
 

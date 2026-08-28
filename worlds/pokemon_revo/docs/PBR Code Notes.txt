@@ -28,7 +28,41 @@ InitSaveSlotFlags = Gateway and Main Street Unlock
 
 
 FUN_800e7f24 unlocks new Rental Passes
-800d2034 calls the unlock for starter pass (atleast for cyndy)
+param 1 = What flag to change
+param 2 = What to set it to
+param 3 = Pass id
+
+Rental Pass ids are from 0x25-0x2A
+0x25 = Cyndy
+0x26 = Nate
+0x27 = Tommy
+0x28 = Daisy
+0x29 = Joel
+0x2A = Natalie
+
+80452998+ tracks what Rental Passes are visible in the rental pass menu
+
+Rental Pass Values:
+0x4a = Cyndy
+0x4b = Cyndy (Disabled)
+0x4c = Nate
+0x4d = Nate (Disabled)
+0x4e = Tommy
+0x4f = Tommy (Disabled)
+0x50 = Daisy
+0x51 = Daisy (Disabled)
+0x52 = Joel
+0x53 = Joel (Disabled)
+0x54 = Natalie
+0x55 = Natalie (Disabled)
+
+800d1f50 gives you a rental pass when borrowing it at Gateway
+
+8010ba14 removes a rental pass after losing at Gateway
+
+801389e4+ runs when you beat Gateway (potential hook point for location check?)
+
+800d2034 calls the unlock for starter pass
 
 FUN_800e7ce8 does various things related to rental passes, depending on its parameters
 most notably, it counts how many rental passes pass a certain condition, such as being in gateway or being unlocked

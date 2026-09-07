@@ -27,7 +27,7 @@ InitSaveSlotFlags = Gateway and Main Street Unlock
 8013a0a4 = Stargazer Unlock
 
 
-FUN_800e7f24 unlocks new Rental Passes
+FUN_800e7f24 sets various flags for Battle Passes
 param 1 = What flag to change
 param 2 = What to set it to
 param 3 = Pass id

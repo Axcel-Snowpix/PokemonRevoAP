@@ -78,10 +78,11 @@ def create_item_with_correct_classification(world: PBRWorld, name: str) -> PBRIt
 
 def create_all_items(world: PBRWorld) -> None:
     itempool: list[Item] = []
-    if world.options.total_badge_amount < world.options.required_badge_amount:
-        world.options.total_badge_amount = world.options.required_badge_amount
+
+    starting_colosseums = []
+    colo_pool = world.options.starting_colosseum_pool.value
     if world.options.starting_colosseum_amount != -1:
-        if len(world.options.starting_colosseum_pool.value) < world.options.starting_colosseum_amount:
+        if len(colo_pool) < world.options.starting_colosseum_amount:
             colosseum_list = [
                 "Gateway Colosseum",
                 "Main Street Colosseum",
@@ -93,19 +94,15 @@ def create_all_items(world: PBRWorld) -> None:
                 "Courtyard Colosseum",
                 "Sunset Colosseum",
             ]
-            for colosseum in world.options.starting_colosseum_pool:
+            for colosseum in colo_pool:
                 colosseum_list.remove(colosseum)
-            while True:
+            while len(colo_pool) < world.options.starting_colosseum_amount:
                 random_colosseum = world.random.randrange(0,len(colosseum_list))
-                world.options.starting_colosseum_pool.value.add(colosseum_list[random_colosseum])
-                if len(world.options.starting_colosseum_pool.value) >= world.options.starting_colosseum_amount:
-                    break
-        starting_colosseums = []
-        pool = list(world.options.starting_colosseum_pool.value)
+                colo_pool.add(colosseum_list[random_colosseum])
         for _ in range(0,world.options.starting_colosseum_amount):
-            new_colosseum = world.random.randrange(0,len(pool))
-            starting_colosseums.append(pool[new_colosseum])
-            pool.pop(new_colosseum)
+            new_colosseum = world.random.randrange(0,len(colo_pool))
+            starting_colosseums.append(list(colo_pool)[new_colosseum])
+            colo_pool.pop(new_colosseum)
     else:
         starting_colosseums = ["Gateway Colosseum", "Main Street Colosseum"]
 
@@ -115,17 +112,19 @@ def create_all_items(world: PBRWorld) -> None:
                 world.push_precollected(world.create_item(item))
             else:
                 itempool.append(world.create_item(item))
-        elif data.group == "Rental Passes":
-            if world.options.randomize_rental_passes:
-                starter_pass_check = item.lower().removesuffix("'s rental pass")
-                if not world.options.starting_rental_pass == starter_pass_check:
-                    itempool.append(world.create_item(item))
-                else:
-                    world.push_precollected(world.create_item(item))
-        elif data.group == "Macguffin":
-            if world.options.goal_unlock_method == "badge_hunt" or world.options.goal_unlock_method == "both":
-                for _ in range(0,world.options.total_badge_amount):
-                    itempool.append(world.create_item(item))
+        elif data.group == "Rental Passes" and world.options.randomize_rental_passes:
+            starter_pass_check = item.lower().removesuffix("'s rental pass")
+            if world.options.starting_rental_pass == starter_pass_check:
+                world.push_precollected(world.create_item(item))
+            else:
+                itempool.append(world.create_item(item))
+        elif data.group == "Macguffin" and world.options.goal_unlock_method != "colosseum_clears":
+            if world.options.total_badge_amount < world.options.required_badge_amount:
+                total_badges = world.options.required_badge_amount
+            else:
+                total_badges = world.options.total_badge_amount
+            for _ in range(0,total_badges):
+                itempool.append(world.create_item(item))
 
     number_of_items = len(itempool)
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, NamedTuple
 
-from BaseClasses import ItemClassification, Location
+from BaseClasses import Location
 
 from . import items
 
@@ -65,10 +65,6 @@ def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | No
 
 
 def create_all_locations(world: PBRWorld) -> None:
-    create_locations(world)
-
-
-def create_locations(world: PBRWorld) -> None:
     for location, data in LOCATION_TABLE.items():
         if data.code == None:
             region = world.get_region(data.region)

@@ -116,7 +116,7 @@ option_groups = [
         [GoalUnlockMethod, RequiredBadgeAmount, TotalBadgeAmount, ColosseumClearCount],
     ),
     OptionGroup(
-        "Gameplay Options",
+        "Main Options",
         [StartingColosseumAmount, StartingColosseumPool, RandomizeRentalPasses, StartingRentalPass],
     ),
 ]

@@ -100,8 +100,9 @@ def create_all_items(world: PBRWorld) -> None:
                 random_colosseum = world.random.randrange(0,len(colosseum_list))
                 colo_pool.add(colosseum_list[random_colosseum])
         for _ in range(0,world.options.starting_colosseum_amount):
+            colo_pool = list(colo_pool)
             new_colosseum = world.random.randrange(0,len(colo_pool))
-            starting_colosseums.append(list(colo_pool)[new_colosseum])
+            starting_colosseums.append(colo_pool[new_colosseum])
             colo_pool.pop(new_colosseum)
     else:
         starting_colosseums = ["Gateway Colosseum", "Main Street Colosseum"]

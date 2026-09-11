@@ -3,7 +3,7 @@ Bit flag table is in common 0017.bin
 FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
 It also seems to handle a bunch of other flags
 
-Colosseum Unlock Flag IDs
+Bit Flag Table IDs
 0x2d = Gateway Colosseum
 0x2e = Main Street Colosseum
 0x2f = Waterfall Colosseum
@@ -14,6 +14,11 @@ Colosseum Unlock Flag IDs
 0x34 = Courtyard Colosseum
 0x35 = Sunset Colosseum
 0x36 = Stargazer Colosseum
+0x39 = Post Game
+0x251 = Gateway Post Game Win
+0x257 = Sunny Park Post Game Win
+0x25a = Courtyard Post Game Win
+0x25c = Stargazer Post Game Win
 
 Colosseum Unlock Calls:
 InitSaveSlotFlags = Gateway and Main Street Unlock
@@ -75,6 +80,11 @@ Addresses that check if a rental pass is in Gateway:
 	800c8930
 
 800cdbd4 may be starting rental pass call? probably not
+
+8008f0f8 handles the buttons in Colosseum Battle menu
+Cases 0x0-0x9 handle if you can select each colosseum
+From case 0xa onwards, even cases handle how to display the button icons,
+while odd cases handle the arrows pointing to each colosseum's location on the map
 
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)

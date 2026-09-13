@@ -71,11 +71,16 @@ Rental Pass Values:
 
 FUN_800e7ce8 does various things related to rental passes, depending on its parameters
 most notably, it counts how many rental passes pass a certain condition, such as being in gateway or being unlocked
-param1 = 12 & param2 = -1: Checks if a rental pass is in Gateway (so if bit 3 is checked, but not bit 4)
+Case 0xc checks if a rental pass is in Gateway (so if bit 3 is checked, but not bit 4)
+800e7e60 is the check for bit 4 not being 0
 
-Addresses that check if a rental pass is in Gateway:
-	800c8b08
-	800e7e60
+800886a0 checks if all Rental Passes have been unlocked, and if so, skips the menu that let's you choose between using one of your Rental Passes or borrowing a new one.
+
+800c8b08 checks which Rental Passes can show up in the Borrow New Pass menu.
+
+80086cf4 check whether the Borrow New Pass button should be pressable.
+
+Other addresses that check if a Rental Pass is in Gateway (not sure what these do): 
 	800dccd4
 	800c8930
 

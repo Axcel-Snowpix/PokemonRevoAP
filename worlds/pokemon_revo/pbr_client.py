@@ -47,14 +47,14 @@ SAVE_SLOT_START = 0x380
 SAVE_SLOT_OFFSET = 0x6FF00
 
 # The expected index for the following item that should be received.
-EXPECTED_INDEX_OFFSET = 0x68531
+EXPECTED_INDEX_OFFSET = 0x68530
 
 # The address containing the slot name, used for server authentication.
 # TODO: Find a proper address for this, then reimplement automatic server authentication.
 # SLOT_NAME_ADDR = 0x80000006
 
 # The offset containing the player's Pokétopia Badges.
-BADGE_COUNT = 0x68533
+BADGE_COUNT = 0x68532
 
 # Offset for the unlocked Colosseums bitfield.
 # Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.

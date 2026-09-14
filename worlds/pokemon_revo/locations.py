@@ -17,13 +17,13 @@ class PBRLocationData(NamedTuple):
     :param group: The group the location is in.
     :param code: The unique code identifier for the location.
     :param region: The name of the region where the location resides.
-    :param offset: The offset used to find the location in memory.
+    :param value: A special value used for checking the location.
     """
 
     group: str
     code: Optional[int]
     region: str
-    offset: Optional[int] = None
+    value: Optional[int] = None
 
 
 class PBRLocation(Location):
@@ -51,12 +51,12 @@ LOCATION_TABLE: dict[str, PBRLocationData] = {
     "Sunset Colosseum - Clear Check #2":      PBRLocationData("Colosseum Clears", 18,   "Sunset Colosseum",      0x124F8),
     "Stargazer Colosseum - Clear":            PBRLocationData("Colosseum Clears", None, "Stargazer Colosseum",   0x124FF),
 
-    "Gateway Colosseum - Obtain Cyndy's Rental Pass":   PBRLocationData("Rental Pass Checks", 19, "Gateway Colosseum", 0x23A39),
-    "Gateway Colosseum - Obtain Nate's Rental Pass":    PBRLocationData("Rental Pass Checks", 20, "Gateway Colosseum", 0x24125),
-    "Gateway Colosseum - Obtain Tommy's Rental Pass":   PBRLocationData("Rental Pass Checks", 21, "Gateway Colosseum", 0x24811),
-    "Gateway Colosseum - Obtain Daisy's Rental Pass":   PBRLocationData("Rental Pass Checks", 22, "Gateway Colosseum", 0x24EFD),
-    "Gateway Colosseum - Obtain Joel's Rental Pass":    PBRLocationData("Rental Pass Checks", 23, "Gateway Colosseum", 0x255E9),
-    "Gateway Colosseum - Obtain Natalie's Rental Pass": PBRLocationData("Rental Pass Checks", 24, "Gateway Colosseum", 0x25CD5),
+    "Gateway Colosseum - Borrow Cyndy's Rental Pass":   PBRLocationData("Rental Pass Checks", 19, "Gateway Colosseum", 0),
+    "Gateway Colosseum - Borrow Nate's Rental Pass":    PBRLocationData("Rental Pass Checks", 20, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Borrow Tommy's Rental Pass":   PBRLocationData("Rental Pass Checks", 21, "Gateway Colosseum", 2),
+    "Gateway Colosseum - Borrow Daisy's Rental Pass":   PBRLocationData("Rental Pass Checks", 22, "Gateway Colosseum", 3),
+    "Gateway Colosseum - Borrow Joel's Rental Pass":    PBRLocationData("Rental Pass Checks", 23, "Gateway Colosseum", 4),
+    "Gateway Colosseum - Borrow Natalie's Rental Pass": PBRLocationData("Rental Pass Checks", 24, "Gateway Colosseum", 5),
 }
 
 

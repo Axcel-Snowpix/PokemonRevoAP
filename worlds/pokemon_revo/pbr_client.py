@@ -33,8 +33,7 @@ CONNECTION_LOST_STATUS = (
 CONNECTION_CONNECTED_STATUS = "Dolphin connected successfully."
 CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
 
-# This address contains the starting address of the save file in memory.
-# Note: It is NOT the actual starting address of the save file.
+# This address contains a pointer to the starting address of the save file in memory.
 SAVE_FILE_FIND_ADDR = 0x8045DE80
 
 # The offset for the address that contains the currently loaded save profile's index.
@@ -60,6 +59,9 @@ BADGE_COUNT = 0x68532
 # Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
 # Byte 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
 COLOSSEUMS_BITFIELD = 0x12508
+
+# The offset to the bitfield that tracks the Rental Pass locations.
+PASS_CHECKS_OFFSET = 0x68533
 
 # Offset for Player's Poké Coupons.
 POKE_COUPONS = 0x124E1
@@ -310,8 +312,12 @@ async def check_locations(ctx: PBRContext) -> None:
     for location, data in LOCATION_TABLE.items():
         checked = False
         if data.group == "Colosseum Clears":
-            colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+            colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.value)
             if colosseum_clears > 0x0:
+                checked = True
+        elif data.group == "Rental Pass Checks":
+            pass_checks = dolphin_memory_engine.read_byte(save_file_address + PASS_CHECKS_OFFSET)
+            if bool((pass_checks >> data.value) & 1):
                 checked = True
 
         if checked:
@@ -345,7 +351,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
         if ctx.slot_data["goal_unlock_method"] != 0:
             for location, data in LOCATION_TABLE.items():
                 if data.group == "Colosseum Clears":
-                    colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+                    colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.value)
                     if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
                         ctx.colosseums_cleared.append(data.region)
             if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:

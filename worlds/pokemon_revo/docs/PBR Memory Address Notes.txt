@@ -28,6 +28,8 @@ Colosseum Unlock Bitfield 1: 0x12509
 Colosseum Unlock Bitfield 2: 0x12508
 Post Game Flag: 0x12511
 
+Mark if the Player is Currently Borrowing a New Pass from Gateway: 0x125B7
+
 Cyndy's Rental Pass: 0x23A39
 Nate's Rental Pass: 0x24125
 Tommy's Rental Pass: 0x24811

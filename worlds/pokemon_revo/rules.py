@@ -16,16 +16,16 @@ def set_all_rules(world: PBRWorld) -> None:
 
 def set_all_location_rules(world: PBRWorld) -> None:
     if world.options.randomize_rental_passes:
-        tommy_pass_location = world.get_location("Gateway Colosseum - Obtain Tommy's Rental Pass")
+        tommy_pass_location = world.get_location("Gateway Colosseum - Borrow Tommy's Rental Pass")
         world.set_rule(tommy_pass_location, Has("Waterfall Colosseum"))
 
-        daisy_pass_location = world.get_location("Gateway Colosseum - Obtain Daisy's Rental Pass")
+        daisy_pass_location = world.get_location("Gateway Colosseum - Borrow Daisy's Rental Pass")
         world.set_rule(daisy_pass_location, Has("Waterfall Colosseum"))
 
-        joel_pass_location = world.get_location("Gateway Colosseum - Obtain Joel's Rental Pass")
+        joel_pass_location = world.get_location("Gateway Colosseum - Borrow Joel's Rental Pass")
         world.set_rule(joel_pass_location, Has("Sunny Park Colosseum"))
 
-        natalie_pass_location = world.get_location("Gateway Colosseum - Obtain Natalie's Rental Pass")
+        natalie_pass_location = world.get_location("Gateway Colosseum - Borrow Natalie's Rental Pass")
         world.set_rule(natalie_pass_location, Has("Sunny Park Colosseum"))
 
 

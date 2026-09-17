@@ -19,6 +19,7 @@ Bit Flag Table IDs
 0x257 = Sunny Park Post Game Win
 0x25a = Courtyard Post Game Win
 0x25c = Stargazer Post Game Win
+0x280 = Is the Player Currently Borrowing a New Rental Pass from Gateway?
 
 Colosseum Unlock Calls:
 InitSaveSlotFlags = Gateway and Main Street Unlock

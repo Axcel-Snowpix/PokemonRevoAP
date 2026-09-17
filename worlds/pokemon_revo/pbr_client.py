@@ -60,6 +60,10 @@ BADGE_COUNT = 0x68532
 # Byte 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
 COLOSSEUMS_BITFIELD = 0x12508
 
+# Offset for a custom bitfield that tracks your unlocked Rental Passes.
+# This is needed so that the game won't remove your unlocked Rental Passes when doing the checks in Gateway.
+PASS_UNLOCK_BITFIELD = 0x68534
+
 # The offset to the bitfield that tracks the Rental Pass locations.
 PASS_CHECKS_OFFSET = 0x68533
 
@@ -247,6 +251,10 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
             if not bool((rental_pass_value >> 5) & 1):
                 dolphin_memory_engine.write_byte(save_file_address + ITEM_TABLE[item_name].value,
                                                 rental_pass_value + 0x10)
+            unlocked_rental_passes = dolphin_memory_engine.read_byte(save_file_address + PASS_UNLOCK_BITFIELD)
+            if not bool((unlocked_rental_passes >> ITEM_TABLE[item_name].bit) & 1):
+                dolphin_memory_engine.write_byte(save_file_address + PASS_UNLOCK_BITFIELD,
+                                                 unlocked_rental_passes + (0x1 << ITEM_TABLE[item_name].bit))
             return True
         case "Poké Coupons":
             if poke_coupons_value + ITEM_TABLE[item_name].value >= 999999:

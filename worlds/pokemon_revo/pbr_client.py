@@ -6,13 +6,17 @@ from typing import TYPE_CHECKING, Any, Optional
 import dolphin_memory_engine
 
 import Utils
-from CommonClient import ClientCommandProcessor, get_base_parser, gui_enabled, logger, server_loop
+from CommonClient import get_base_parser, gui_enabled, logger, server_loop
+
 tracker_loaded = False
 try:
     from worlds.tracker.TrackerClient import TrackerGameContext as SuperContext
+    from worlds.tracker.TrackerClient import TrackerCommandProcessor as SuperCommandProcessor
     tracker_loaded = True
 except ModuleNotFoundError:
     from CommonClient import CommonContext as SuperContext
+    from CommonClient import ClientCommandProcessor as SuperCommandProcessor
+
 from NetUtils import ClientStatus
 
 if TYPE_CHECKING:
@@ -71,7 +75,7 @@ PASS_CHECKS_OFFSET = 0x68533
 POKE_COUPONS = 0x124E1
 
 
-class PBRCommandProcessor(ClientCommandProcessor):
+class PBRCommandProcessor(SuperCommandProcessor):
     """
     Command Processor for Pokémon Battle Revolution client commands.
 

@@ -7,7 +7,7 @@ from Options import Option
 from . import items, locations, regions, rules, web_world
 from . import options as pbr_options  # rename due to a name conflict with World.options
 from .items import ITEM_TABLE, item_name_groups
-from .locations import LOCATION_TABLE
+from .locations import LOCATION_TABLE, location_name_groups
 
 class PBRWorld(World):
     """
@@ -32,6 +32,7 @@ class PBRWorld(World):
     }
 
     item_name_groups: ClassVar[dict[str, set[str]]] = item_name_groups
+    location_name_groups: ClassVar[dict[str, set[str]]] = location_name_groups
 
     origin_region_name = "Menu"
 

@@ -74,3 +74,22 @@ def create_all_locations(world: PBRWorld) -> None:
         elif data.group != "Rental Pass Checks" or world.options.randomize_rental_passes:
             region = world.get_region(data.region)
             region.add_locations({location: data.code}, PBRLocation)
+
+location_name_groups = {
+    "Gateway Colosseum": set(),
+    "Main Street Colosseum": set(),
+    "Waterfall Colosseum": set(),
+    "Neon Colosseum": set(),
+    "Crystal Colosseum": set(),
+    "Sunny Park Colosseum": set(),
+    "Magma Colosseum": set(),
+    "Courtyard Colosseum": set(),
+    "Sunset Colosseum": set(),
+    "Stargazer Colosseum": set(),
+    "Rental Pass Checks": set(),
+}
+for item, data in LOCATION_TABLE.items():
+    if data.group in location_name_groups:
+        location_name_groups[data.group].add(item)
+    elif data.region in location_name_groups:
+        location_name_groups[data.region].add(item)

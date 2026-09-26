@@ -4,16 +4,26 @@ FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
 It also seems to handle a bunch of other flags
 
 Bit Flag Table IDs
-0x2d = Gateway Colosseum
-0x2e = Main Street Colosseum
-0x2f = Waterfall Colosseum
-0x30 = Neon Colosseum
-0x31 = Crystal Colosseum
-0x32 = Sunny Park Colosseum
-0x33 = Magma Colosseum
-0x34 = Courtyard Colosseum
-0x35 = Sunset Colosseum
-0x36 = Stargazer Colosseum
+0xe = Gateway Wins
+0xf = Main Street Wins
+0x10 = Waterfall Wins
+0x11 = Neon Wins
+0x12 = Crystal Wins
+0x13 = Sunny Park Wins
+0x14 = Magma Wins
+0x15 = Courtyard Wins
+0x16 = Sunset Wins
+0x17 = Stargazer Wins
+0x2d = Gateway Unlock
+0x2e = Main Street Unlock
+0x2f = Waterfall Unlock
+0x30 = Neon Unlock
+0x31 = Crystal Unlock
+0x32 = Sunny Park Unlock
+0x33 = Magma Unlock
+0x34 = Courtyard Unlock
+0x35 = Sunset Unlock
+0x36 = Stargazer Unlock
 0x39 = Post Game
 0x251 = Gateway Post Game Win
 0x257 = Sunny Park Post Game Win
@@ -91,6 +101,21 @@ Other addresses that check if a Rental Pass is in Gateway (not sure what these d
 Cases 0x0-0x9 handle if you can select each colosseum
 From case 0xa onwards, even cases handle how to display the button icons,
 while odd cases handle the arrows pointing to each colosseum's location on the map
+
+Rental Passes become available to borrow through FUN_800e8aa8 (which is weird cuz SetBattlePassFlag already has a case for it?)
+It gets called by FUN_8013bf94, which has various cases for many Passes, even ones that aren't Rental Passes
+Note that it has a check to see if the Pass has already been unlocked before adding it to Gateway
+This function, in turn, gets called by FUN_8013a354, which does various things based on what flags are turned on
+8013a820 onwards handles adding Tommy, Daisy, Joel and Natalie to Gateway
+It checks a certain flag, and if said flag is 1, it adds a specific Rental Pass to Gateway
+Flag 0x1ff is checked for Tommy
+Flag 0x201 is checked for Daisy
+Flag 0x203 is checked for Joel
+Flag 0x205 is checked for Natalie
+These flags are turned on in FUN_80138970, in addresses 80139c30 and onwards
+The function seems to run every time you beat a colosseum
+Flags 0x1ff, 0x200, 0x194, 0x201, 0x202 and 0x195 are turned on if the player has beaten Main Street and Waterfall
+Flags 0x203, 0x204, 0x196, 0x205, 0x206 and 0x197 are turned on if the player has beaten Neon, Crystal and Sunny Park, as well as having unlocked at least 2 Rental Passes
 
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)

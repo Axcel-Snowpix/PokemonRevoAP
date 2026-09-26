@@ -41,14 +41,14 @@ ITEM_TABLE: dict[str, PBRItemData] = {
     "Sunset Colosseum":      PBRItemData("Colosseums", ItemClassification.progression, 9,  0x1000, 12),
    #"Stargazer Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 10, 0x2000, 13),
 
-    "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_deprioritized, 10, None, None),
+    "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_skip_balancing, 10, None, None),
 
-    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 11, 0x23A39, 0),
-    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 12, 0x24125, 1),
-    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 13, 0x24811, 2),
-    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.useful, 14, 0x24EFD, 3),
-    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.useful, 15, 0x255E9, 4),
-    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.useful, 16, 0x25CD5, 5),
+    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 11, 0x23A39, 0),
+    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 12, 0x24125, 1),
+    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 13, 0x24811, 2),
+    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 14, 0x24EFD, 3),
+    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 15, 0x255E9, 4),
+    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 16, 0x25CD5, 5),
 
     "100 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 17, 0x64,  None),
     "200 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 18, 0xC8,  None),
@@ -62,14 +62,13 @@ LOOKUP_ID_TO_NAME: dict[int, str] = {
 
 
 def get_random_filler_item_name(world: PBRWorld) -> str:
-    match world.random.randint(0,2):
-        case 0:
-            filler_item = "100 Poké Coupons"
-        case 1:
-            filler_item = "200 Poké Coupons"
-        case 2:
-            filler_item = "300 Poké Coupons"
-    return filler_item
+    filler_item_list = []
+
+    for item, data in ITEM_TABLE.items():
+        if data.classification == ItemClassification.filler:
+            filler_item_list.append(item)
+
+    return filler_item_list[world.random.randrange(0,len(filler_item_list))]
 
 
 def create_item_with_correct_classification(world: PBRWorld, name: str) -> PBRItem:

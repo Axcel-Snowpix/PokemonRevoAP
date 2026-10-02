@@ -117,6 +117,13 @@ The function seems to run every time you beat a colosseum
 Flags 0x1ff, 0x200, 0x194, 0x201, 0x202 and 0x195 are turned on if the player has beaten Main Street and Waterfall
 Flags 0x203, 0x204, 0x196, 0x205, 0x206 and 0x197 are turned on if the player has beaten Neon, Crystal and Sunny Park, as well as having unlocked at least 2 Rental Passes
 
+80626e9b tracks what menu button the cursor is hovering over
+80626ea3 tracks what menu button the Wii Remote pointer is hovering over
+FUN_8005b5ec seems to be responsible for dealing with the cursor in menus
+8005ba88 sets the default menu button the cursor should hover over when entering a new menu, with set default button being param_2
+800852e8 is the call to FUN_8005b5ec that sets the default cursor position when entering the Colosseums menu, with param_2 being DAT_8062700c
+80084de4 is where DAT_8062700c gets set to 2 (Main Street Colosseum)
+
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)
 0x80627336 (byte) - The Save Slot To Save The Bits For? At the very least when initing.

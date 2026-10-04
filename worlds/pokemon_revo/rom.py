@@ -34,7 +34,8 @@ class PBRPatch(APAutoPatchInterface):
     def patch(self, target):
         self.read()
         options = self.get_file("options.json")
-        base_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/base_dol_patch.bsdiff")
+        base_dol_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/base_dol_patch.bsdiff")
+        common_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/common_fsys_patch.bsdiff")
         iso_path = get_settings().pokemon_battle_revolution_settings.rom_file
 
         extractor = disc_riider_py.WiiIsoExtractor(iso_path)
@@ -49,21 +50,26 @@ class PBRPatch(APAutoPatchInterface):
         extractor.extract_to(pbr_temp, None)
         print("ISO Extraction Complete.")
 
-        main_dol_patch = pbr_temp+"/DATA/sys/main.dol"
-
-        with open(main_dol_patch, "rb") as main_dol:
+        main_dol_path = pbr_temp+"/DATA/sys/main.dol"
+        with open(main_dol_path, "rb") as main_dol:
             main_dol_bytes = bytes(main_dol.read())
-
         print("Adding Base main.dol Patch...")
-        patched_dol = bsdiff4.patch(main_dol_bytes, base_patch)
+        patched_dol = bsdiff4.patch(main_dol_bytes, base_dol_patch)
         if '\"randomize_rental_passes\": 1'.encode("utf8") in options:
             pass_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/rental_pass_rando_patch.bsdiff")
             print("Adding Rental Pass Randomizer Patch...")
             patched_dol = bsdiff4.patch(patched_dol, pass_patch)
-
         print("Saving Patched main.dol...")
-        with open(main_dol_patch, "wb") as main_dol:
+        with open(main_dol_path, "wb") as main_dol:
             main_dol.write(patched_dol)
+
+        common_fsys_path = pbr_temp+"/DATA/files/common.fsys"
+        with open(common_fsys_path, "rb") as common_fsys:
+            common_fsys_bytes = bytes(common_fsys.read())
+        print("Patching common.fsys...")
+        patched_common = bsdiff4.patch(common_fsys_bytes, common_patch)
+        with open(common_fsys_path, "wb") as common_fsys:
+            common_fsys.write(patched_common)
 
         print("Rebuilding ISO...")
         disc_riider_py.rebuild_from_directory(pbr_temp, target, None)

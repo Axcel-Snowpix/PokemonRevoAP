@@ -1,13 +1,27 @@
+import os
 from collections.abc import Mapping
 from typing import Any, ClassVar, Optional
 
+import json
+
 from worlds.AutoWorld import World
+import settings
 from Options import Option
 
 from . import items, locations, regions, rules, web_world
 from . import options as pbr_options  # rename due to a name conflict with World.options
 from .items import ITEM_TABLE, item_name_groups
 from .locations import LOCATION_TABLE, location_name_groups
+from .rom import PBRPatch
+from ..Files import APPlayerContainer
+
+class PBRSettings(settings.Group):
+    class PBRRomFile(settings.UserFilePath):
+        description = "Pokémon Battle Revolution USA ROM File"
+        copy_to = "Pokemon Battle Revolution (USA).iso"
+        md5s = [PBRPatch.hash]
+
+    rom_file: PBRRomFile = PBRRomFile(PBRRomFile.copy_to)
 
 class PBRWorld(World):
     """
@@ -18,6 +32,9 @@ class PBRWorld(World):
     game = "Pokémon Battle Revolution"
 
     web = web_world.PBRWebWorld()
+
+    settings_key = "pokemon_battle_revolution_settings"
+    settings: ClassVar[PBRSettings]
 
     ut_can_gen_without_yaml = True
 
@@ -44,14 +61,11 @@ class PBRWorld(World):
     def generate_early(self) -> None:
         re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
         if re_gen_passthrough and self.game in re_gen_passthrough:
-            # Get the passed through slot data from the real generation
             slot_data: dict[str, Any] = re_gen_passthrough[self.game]
             
-            # Set all your options here instead of getting them from the yaml
             for key, value in slot_data.items():
                 opt: Optional[Option] = getattr(self.options, key, None)
                 if opt is not None:
-                    # You can also set .value directly but that won't work if you have OptionSets
                     setattr(self.options, key, opt.from_any(value))
 
     def create_regions(self) -> None:
@@ -69,6 +83,15 @@ class PBRWorld(World):
 
     def get_filler_item_name(self) -> str:
         return items.get_random_filler_item_name(self)
+
+    def generate_output(self, output_directory: str) -> None:
+        patch = PBRPatch(player=self.player, player_name=self.player_name)
+
+        options_file = self.options.as_dict("randomize_rental_passes")
+        patch.write_file("options.json", json.dumps(options_file).encode('utf-8'))
+
+        out_file_name = self.multiworld.get_out_file_name_base(self.player)
+        patch.write(os.path.join(output_directory, f"{out_file_name}{patch.patch_file_ending}"))
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         slot_data = self.options.as_dict(

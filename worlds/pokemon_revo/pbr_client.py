@@ -1,10 +1,10 @@
 import asyncio
-import time
 import traceback
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine
 
+import Patch
 import Utils
 from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 
@@ -22,8 +22,8 @@ from NetUtils import ClientStatus
 if TYPE_CHECKING:
     import kvui
 
-from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME, PBRItem, PBRItemData
-from .locations import LOCATION_TABLE, PBRLocation
+from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME
+from .locations import LOCATION_TABLE
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -451,6 +451,12 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
             sleep_time = 5
             continue
 
+def patch_iso(patch_file: str):
+    try:
+        Patch.create_rom_file(patch_file)
+    except Exception as exc:
+        logger.exception(exc)
+        Utils.messagebox("Error Patching Game", str(exc), True)
 
 def main(*args: str) -> None:
     """
@@ -458,8 +464,15 @@ def main(*args: str) -> None:
 
     :param *args: Command line arguments passed to the client.
     """
-    Utils.init_logging("Pokémon Battle Revolution Client")
+    parser = get_base_parser()
+    parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to an Archipelago patch file")
+    parsed_args = parser.parse_args(args)
+    
+    if parsed_args.patch_file != "":
+        patch_iso(parsed_args.patch_file)
 
+    Utils.init_logging("Pokémon Battle Revolution Client")
+    
     async def _main(connect: Optional[str], password: Optional[str]) -> None:
         ctx = PBRContext(connect, password)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
@@ -482,9 +495,6 @@ def main(*args: str) -> None:
 
         if ctx.dolphin_sync_task:
             await ctx.dolphin_sync_task
-
-    parser = get_base_parser()
-    parsed_args = parser.parse_args(args)
 
     import colorama
 

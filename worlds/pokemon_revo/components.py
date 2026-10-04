@@ -6,10 +6,7 @@ from .rom import PBRPatch
 def run_client(*args: str) -> None:
     from .pbr_client import main
 
-    if SuffixIdentifier(".appbr") in args:
-        PBRPatch.patch(target=args)
-    else:
-        launch(main, name="Pokémon Battle Revolution Client", args=args)
+    launch(main, name="Pokémon Battle Revolution Client", args=args)
 
 
 components.append(

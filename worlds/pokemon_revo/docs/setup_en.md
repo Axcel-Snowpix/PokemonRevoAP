@@ -1,58 +1,58 @@
-# APQuest Randomizer Setup Guide
+# Pokémon Battle Revolution Setup Guide
 
 ## Required Software
 
 - [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases/latest)
-- [The APQuest apworld](https://github.com/NewSoupVi/Archipelago/releases), 
-  if not bundled with your version of Archipelago
+- [Pokémon Battle Revolution APWorld](https://github.com/Axcel-Snowpix/PokemonRevoAP/releases/latest)
+- [Dolphin Emulator](https://dolphin-emu.org/download)
+- Pokémon Battle Revolution USA ISO ROM
+
+### Configuring Dolphin
+
+In Dolphin, go to `Options > Graphics Settings > Hacks` and turn off `Store EFB Copies to Texture Only`.  
+This will fix an issue where a trainer's photo won't be displayed on their Battle Pass correctly.
 
 ## Optional Software
 
-- [APQuest AP Tracker](https://github.com/palex00/ap-quest-tracker/releases/latest), for use with
-[PopTracker](https://github.com/black-sliver/PopTracker/releases)
+- [Universal Tracker](https://github.com/FarisTheAncient/Archipelago/releases)
 
-## How to play
+## Installing the APWorld
 
-First, you need a room to connect to. For this, you or someone you know has to generate a game.  
-This will not be explained here,
-but you can check the [Archipelago Setup Guide](/tutorial/Archipelago/setup_en#generating-a-game).
+There's a few ways to install the APWorld
 
-You also need to have [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases/latest) installed
-and the [The APQuest apworld](https://github.com/NewSoupVi/Archipelago/releases) installed into Archipelago.
+1- Open the Archipelago Launcher and search for the `Install APWorld` option.  
+2- Double click the APWorld file and set it to open with the Archipelago Launcher.  
+3- Put the APWorld file in the `custom_worlds` folder of your Archipelago installation. You can find it by opening the Archipelago Launcher and searching for the `Browse Files` option.
 
-From here, connecting to your APQuest slot is easy. There are two scenarios.
+## Options and Generating
 
-### Webhost Room
+### Configuring your YAML File
 
-If your room is hosted on a WebHost (e.g. [archipelago.gg](https://archipelago.gg)),
-you should be able to simply click on your name in the player list.  
-This will open the Archipelago Launcher
-and ask you whether you want to connect with the Text Client or the APQuest Client.  
-Choose "APQuest Client". The rest should happen completely automatically and you should be able to play APQuest.
+After installing the Pokémon Battle Revolution APWorld, open the Archipelago Launcher (if you already had it open while installing the APWorld, restart it) and then search for the `Options Creator`. There, you can find and select Pokémon Battle Revolution on the games list to the left, and starting choosing your options.  
+Alternatively, you can search for `Generate Template Options` in the launcher and click it. Once you do, it'll open a folder with template YAMLs for all of your installed worlds. In there, search for `Pokémon Battle Revolution.yaml`, make a copy of it, and then edit it in any text editor of your choice (i.e. Notepad).
 
-### Locally hosted room
+### Generating the Multiworld
 
-If your room does not have a WebHost room page available, you can launch APQuest manually.  
+To generate a Multiworld, follow the Archipelago instructions for [generating a game](https://archipelago.gg/tutorial/Archipelago/setup_en#generating-a-multiplayer-game), specifically the instructions for generating on your local installation.  
+Once the Multiworld has been generated, follow the instructions for [hosting an Archipelago server](https://archipelago.gg/tutorial/Archipelago/setup_en#hosting-an-archipelago-server).  
+If you're not the one generating the Multiworld, then simply send the host your YAML file.
 
-Open the Archipelago Launcher, and then select the APQuest Client from the list.  
-After a short while, the APQuest client should open.  
-Enter the server address at the top and click "Connect".  
-Then, enter your name. If a password exists, enter the password.  
-You should now be connected and able to play APQuest.
+## Patching and Playing your Game
 
-## Switching Rooms
+### Acquiring your Patch File
 
-The APQuest Client can seamlessly switch rooms without restarting.
+After the Multiworld has been generated, you need to get your `.appbr` patch file. There's a few ways to do this.  
+1- If the Multiworld is being hosted in the offical [Archipelago website](https://archipelago.gg/), open the room's page in your browser and search for your slot; next to it there should be text saying `Download Patch File`; click it, and the patch will begin installing.  
+2- If you are the one who generated the Multiworld, unzip the output file and look for a `.appbr` file with your slot name on it.  
+3- If neither of the above apply, ask the host of your Multiworld to send the patch to you.
 
-Simply click the "Disconnect" button, then connect to a different slot/room.
+### Patching and Playing the Game
 
-## Auto-Tracking
+To patch your game, open the Archipelago Launcher and drag-and-drop your patch file onto it.  
+Alternatively, you can double click your patch and set it to open with the Archipelago Launcher.  
+Once you do either of the above, wait a bit for it to finish patching. Once it does, the `Pokémon Battle Revolution Client` will automatically open, and you will find a patched `.iso` ROM in the same folder as the patch file.  
 
-AP Quest has a fully functional map tracker that supports auto-tracking.
-
-1. Download [APQuest AP Tracker](https://github.com/palex00/ap-quest-tracker/releases/latest) and
-[PopTracker](https://github.com/black-sliver/PopTracker/releases).
-2. Put the tracker pack into packs/ in your PopTracker install.
-3. Open PopTracker, and load the APQuest pack.
-4. For autotracking, click on the "AP" symbol at the top.
-5. Enter the Archipelago server address (the one you connected your client to), slot name, and password.
+Now that you have patched the game, open Dolphin and start the patched game.  
+Make sure to create a new save file **before connecting the client to the server**. This is to ensure that the client doesn't begin reading data from the wrong save file.  
+Once you've created a save file, go to the client and insert the server's information to connect to it.  
+Afterwards, you can freely go ahead and play the game. Enjoy!

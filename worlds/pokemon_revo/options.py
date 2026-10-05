@@ -33,7 +33,7 @@ class TotalBadgeAmount(Range):
     This option only matters if Goal Unlock Method is set to either Badge Hunt or Both.
     """
     display_name = "Total Badge Amount"
-    range_start = 4
+    range_start = 3
     range_end = 10
     default = 8
 

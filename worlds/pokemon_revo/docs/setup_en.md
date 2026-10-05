@@ -55,4 +55,10 @@ Once you do either of the above, wait a bit for it to finish patching. Once it d
 Now that you have patched the game, open Dolphin and start the patched game.  
 Make sure to create a new save file **before connecting the client to the server**. This is to ensure that the client doesn't begin reading data from the wrong save file.  
 Once you've created a save file, go to the client and insert the server's information to connect to it.  
-Afterwards, you can freely go ahead and play the game. Enjoy!
+Afterwards, you can freely go ahead and play the game.
+
+### Continuing from a Previous Session
+
+To continue your playthrough, open the previously patched ROM in Dolphin and load your save file.  
+Afterwards, open the Archipelago Launcher, search for the `Pokémon Battle Revolution Client` and run it.  
+From there, simply connect to the server as you did before.  

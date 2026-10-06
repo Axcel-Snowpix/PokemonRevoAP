@@ -355,9 +355,10 @@ async def run_save_debugger(ctx: PBRContext) -> None:
     """
     pbr_save_ptr = read_word(PBR_SAVE_DATA_PTR)
     pbr_save_debugger.set_addr(pbr_save_ptr)
-    pbr_save_debugger.set_save_slot(read_word(pbr_save_ptr + PBR_SAVE_SLOT_CURRENT_OFFSET))
+    pbr_save_debugger.set_save_slot(int.from_bytes(dolphin_memory_engine.read_bytes(pbr_save_ptr + PBR_SAVE_SLOT_CURRENT_OFFSET, 1)))
     pbr_flag_start_ptr : int = pbr_save_debugger.get_save_slot_flags_start_addr()
-    pbr_flag_bytes = dolphin_memory_engine.read_bytes(pbr_flag_start_ptr, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL)
+    # logger.info(hex(pbr_flag_start_ptr))
+    pbr_flag_bytes : bytearray = dolphin_memory_engine.read_bytes(pbr_flag_start_ptr, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL)
     pbr_save_debugger.parse_save_slot_flags_from_bytes(pbr_flag_bytes)
     changes:list[tuple] = pbr_save_debugger.get_save_slot_flag_changes()
     if changes == []:

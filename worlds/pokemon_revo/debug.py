@@ -7,8 +7,8 @@ PBR_SAVE_SLOT_CUSTOM_BATTLE_PASSES_OFFSET = 0x134D8
 PBR_SAVE_SLOT_MAX_CUSTOM_BATTLE_PASSES = 34 # note, there are 3 unused passes?
 PBR_SAVE_SLOT_FLAGS_OFFSET = 0x124D8
 PVR_SAVE_SLOT_NUM_FLAGS = 0x28D
-PBR_SAVE_SLOT_FLAG_BYTE_TOTAL = 0xE6
-PBR_SAVE_SLOT_FLAG_BIT_TOTAL = 0x0000072F
+PBR_SAVE_SLOT_FLAG_BYTE_TOTAL = 0xE6 + 0x4 # + 0x4 for padding
+PBR_SAVE_SLOT_FLAG_BIT_TOTAL = PBR_SAVE_SLOT_FLAG_BYTE_TOTAL * 0x8
 
 class PBRSave():
     start_addr: int = 0
@@ -37,17 +37,24 @@ class PBRSave():
             return 0x0 # null
         return self.get_save_slot_start_addr() + PBR_SAVE_SLOT_FLAGS_OFFSET
 
-    def parse_save_slot_flags_from_bytes(self, bytes) -> None:
+    def parse_save_slot_flags_from_bytes(self, bytes : bytearray) -> None:
         if (self.save_slot_idx < 0 or self.start_addr == 0):
             return
         self.old_flag_values = self.new_flag_values
         self.new_flag_values = [] #{}
         # Shift to the right by one since bit 0x72F is unused.
-        all_flags = int.from_bytes(bytes, byteorder="big") >> 1
         for flag, offset_data in PBR_SAVE_SLOT_FLAG_TABLE.items():
-            shift_offset = PBR_SAVE_SLOT_FLAG_BIT_TOTAL - offset_data[0] - offset_data[1]
-            bitmask = ((1 << offset_data[1]) - 1) << shift_offset
-            flag_value = (all_flags & bitmask) >> shift_offset
+            total_bit_offset = offset_data[0]
+            relative_bit_offset = total_bit_offset & 0x1F
+            bit_count = offset_data[1]
+            word_offset = (total_bit_offset >> 5) * 4
+            if bit_count == 1:
+                flag_value = (int.from_bytes(bytes[word_offset:word_offset+4], byteorder="big") >> relative_bit_offset) & 1
+            else:
+                bitmask = (1 << bit_count) - 1
+                flag_value = int.from_bytes(bytes[word_offset:word_offset+4]) >> relative_bit_offset
+                flag_value |= int.from_bytes(bytes[word_offset+4:word_offset+8]) << (0x20 - relative_bit_offset)
+                flag_value &= bitmask
             self.new_flag_values.append(flag_value)
 
     def get_save_slot_flag_changes(self) -> list[tuple]:

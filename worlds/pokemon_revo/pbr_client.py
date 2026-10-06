@@ -246,18 +246,15 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
     match ITEM_TABLE[item_name].group:
         case "Colosseums":
             colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
-            if not bool((colo_flag_value >> ITEM_TABLE[item_name].bit) & 1):
-                write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + ITEM_TABLE[item_name].value)
+            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | ITEM_TABLE[item_name].value)
             return True
         case "Rental Passes":
             rental_pass_value = dolphin_memory_engine.read_byte(save_file_address + ITEM_TABLE[item_name].value)
-            if not bool((rental_pass_value >> 5) & 1):
-                dolphin_memory_engine.write_byte(save_file_address + ITEM_TABLE[item_name].value,
-                                                rental_pass_value + 0x10)
+            dolphin_memory_engine.write_byte(save_file_address + ITEM_TABLE[item_name].value,
+                                             rental_pass_value | 0x10)
             unlocked_rental_passes = dolphin_memory_engine.read_byte(save_file_address + PASS_UNLOCK_BITFIELD)
-            if not bool((unlocked_rental_passes >> ITEM_TABLE[item_name].bit) & 1):
-                dolphin_memory_engine.write_byte(save_file_address + PASS_UNLOCK_BITFIELD,
-                                                 unlocked_rental_passes + (0x1 << ITEM_TABLE[item_name].bit))
+            dolphin_memory_engine.write_byte(save_file_address + PASS_UNLOCK_BITFIELD,
+                                             unlocked_rental_passes | (0x1 << ITEM_TABLE[item_name].bit))
             return True
         case "Poké Coupons":
             poke_coupons_value = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + POKE_COUPONS, 3))
@@ -375,7 +372,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             colosseum_clear_req = True
             
         if badge_hunt_req and colosseum_clear_req:
-            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + 0x2000)
+            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | 0x2000)
 
 
 def check_ingame() -> bool:

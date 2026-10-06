@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME
 from .locations import LOCATION_TABLE
-from .debug import PBRSave, PBR_SAVE_DATA_PTR, PBR_SAVE_SLOT_SIZE, PBR_SAVE_SLOTS_START_OFFSET, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL, PBR_SAVE_SLOT_CURRENT_OFFSET
+from .debug import PBRSave, PBR_SAVE_DATA_PTR, PBR_SAVE_SLOT_SIZE, PBR_SAVE_SLOTS_START_OFFSET, PBR_SAVE_SLOT_FLAG_BYTE_TOTAL, PBR_SAVE_SLOT_CURRENT_OFFSET, PBR_SAVE_SLOT_FLAGS_OFFSET, PBR_SAVE_SLOT_FLAG_TABLE
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -97,6 +97,43 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
+            
+    def _cmd_set_save_flag(self, flag_idx: str, flag_value: str) -> None:
+        """
+        Set a save slot flag in the currently selected save file.
+        """
+        if isinstance(self.ctx, PBRContext):
+            pbr_save_ptr = read_word(PBR_SAVE_DATA_PTR)
+            new_flag_value = int(flag_value)
+            pbr_save_slot_idx = int.from_bytes(dolphin_memory_engine.read_bytes(pbr_save_ptr + PBR_SAVE_SLOT_CURRENT_OFFSET, 1))
+            pbr_save_slot_ptr : int = pbr_save_ptr + PBR_SAVE_SLOTS_START_OFFSET + (PBR_SAVE_SLOT_SIZE * pbr_save_slot_idx)
+            pbr_save_slot_flags_ptr : int = pbr_save_slot_ptr + PBR_SAVE_SLOT_FLAGS_OFFSET
+            total_bit_offset = PBR_SAVE_SLOT_FLAG_TABLE[int(flag_idx)][0]
+            relative_bit_offset = total_bit_offset & 0x1F
+            bit_count = PBR_SAVE_SLOT_FLAG_TABLE[int(flag_idx)][1]
+            word_offset = (total_bit_offset >> 5) * 4
+            bitmask = (1 << bit_count) - 1
+            word_0_value = read_word(pbr_save_slot_flags_ptr + word_offset)
+            word_1_value = read_word(pbr_save_slot_flags_ptr + word_offset + 0x4)
+            original_flag_value = word_0_value >> relative_bit_offset | (word_1_value << (0x20 - relative_bit_offset))
+            original_flag_value &= bitmask
+                
+            if ((new_flag_value & bitmask) != new_flag_value):
+                logger.info(f"Failed Writing Save Slot Flag {flag_idx}, {new_flag_value} Is Invalid, Must Be Less Than {bit_count} Bits, Current Value Of Flag Is {original_flag_value}")
+            else:
+                logger.info(f"Flag {flag_idx} Changed: {original_flag_value} -> {new_flag_value}")
+                word_0_value &= ~(bitmask << relative_bit_offset)
+                word_0_value |= int(new_flag_value) << relative_bit_offset
+                write_word(pbr_save_slot_flags_ptr + word_offset, word_0_value)
+                # Check if the bit flag crosses over word boundaries.
+                if (0x1F < bit_count + relative_bit_offset):
+                    word_1_bit_bleed = (bit_count + relative_bit_offset) - 0x20
+                    word_1_value &= ~((1 << word_1_bit_bleed) - 1) # apply bitmask just for word 1
+                    word_1_value |= int(new_flag_value) >> bit_count - word_1_bit_bleed
+                    write_word(pbr_save_slot_flags_ptr + word_offset + 4, word_1_value)
+                
+            
+            
 
 
 class PBRContext(SuperContext):
@@ -208,6 +245,15 @@ def write_short(console_address: int, value: int) -> None:
     :param value: Value to write.
     """
     dolphin_memory_engine.write_bytes(console_address, value.to_bytes(2, byteorder="big"))
+    
+def write_word(console_address: int, value: int) -> None:
+    """
+    Write a 4-byte word to Dolphin memory.
+
+    :param console_address: Address to write to.
+    :param value: Value to write.
+    """
+    dolphin_memory_engine.write_bytes(console_address, value.to_bytes(4, byteorder="big"))
 
 
 def read_string(console_address: int, strlen: int) -> str:

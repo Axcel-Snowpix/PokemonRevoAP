@@ -76,6 +76,7 @@ def create_all_locations(world: PBRWorld) -> None:
             region.add_locations({location: data.code}, PBRLocation)
 
 location_name_groups = {
+    "Colosseum Clears": set(),
     "Gateway Colosseum": set(),
     "Main Street Colosseum": set(),
     "Waterfall Colosseum": set(),
@@ -91,5 +92,5 @@ location_name_groups = {
 for item, data in LOCATION_TABLE.items():
     if data.group in location_name_groups:
         location_name_groups[data.group].add(item)
-    elif data.region in location_name_groups:
+    if data.region in location_name_groups:
         location_name_groups[data.region].add(item)

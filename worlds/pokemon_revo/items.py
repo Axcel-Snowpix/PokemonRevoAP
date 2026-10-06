@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple, Optional
 
+from Utils import logging
+
 from BaseClasses import Item, ItemClassification
 
 if TYPE_CHECKING:
@@ -78,10 +80,19 @@ def create_item_with_correct_classification(world: PBRWorld, name: str) -> PBRIt
 def create_all_items(world: PBRWorld) -> None:
     itempool: list[Item] = []
 
+    colosseum_pool_warning = f"""
+WARNING: {world.player_name} does not have enough Colosseums in the Starting Colosseum Pool.
+Random Colosseums will be added to the pool until there is enough."""
+
+    badges_warning = f"""
+WARNING: {world.player_name}'s Required Badge Amount is lower than their Total Badge Amount.
+The total amount of badges will be raised to match the number of required badges."""
+
     starting_colosseums = []
     colo_pool = world.options.starting_colosseum_pool.value
     if world.options.starting_colosseum_amount != -1:
         if len(colo_pool) < world.options.starting_colosseum_amount:
+            logging.warning(colosseum_pool_warning)
             colosseum_list = [
                 "Gateway Colosseum",
                 "Main Street Colosseum",
@@ -120,6 +131,7 @@ def create_all_items(world: PBRWorld) -> None:
                 itempool.append(world.create_item(item))
         elif data.group == "Macguffin" and world.options.goal_unlock_method != "colosseum_clears":
             if world.options.total_badge_amount < world.options.required_badge_amount:
+                logging.warning(badges_warning)
                 total_badges = world.options.required_badge_amount
             else:
                 total_badges = world.options.total_badge_amount

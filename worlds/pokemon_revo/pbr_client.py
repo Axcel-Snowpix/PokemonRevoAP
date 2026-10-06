@@ -242,11 +242,10 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
         return False
 
     save_file_address = find_save_file_address()
-    colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
-    poke_coupons_value = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + POKE_COUPONS, 3))
 
     match ITEM_TABLE[item_name].group:
         case "Colosseums":
+            colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
             if not bool((colo_flag_value >> ITEM_TABLE[item_name].bit) & 1):
                 write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + ITEM_TABLE[item_name].value)
             return True
@@ -261,6 +260,7 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
                                                  unlocked_rental_passes + (0x1 << ITEM_TABLE[item_name].bit))
             return True
         case "Poké Coupons":
+            poke_coupons_value = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + POKE_COUPONS, 3))
             if poke_coupons_value + ITEM_TABLE[item_name].value >= 999999:
                 dolphin_memory_engine.write_bytes(save_file_address + POKE_COUPONS, 0xF423F.to_bytes(3, byteorder="big"))
             else:
@@ -360,6 +360,9 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
             if current_badge_count >= ctx.slot_data["required_badge_amount"]:
                 badge_hunt_req = True
+        else:
+            badge_hunt_req = True
+
         if ctx.slot_data["goal_unlock_method"] != 0:
             for location, data in LOCATION_TABLE.items():
                 if data.group == "Colosseum Clears":
@@ -368,11 +371,10 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
                         ctx.colosseums_cleared.append(data.region)
             if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
                 colosseum_clear_req = True
-        if (
-            (ctx.slot_data["goal_unlock_method"] == 0 and badge_hunt_req) or
-            (ctx.slot_data["goal_unlock_method"] == 1 and colosseum_clear_req) or
-            (ctx.slot_data["goal_unlock_method"] == 2 and badge_hunt_req and colosseum_clear_req)
-        ):
+        else:
+            colosseum_clear_req = True
+            
+        if badge_hunt_req and colosseum_clear_req:
             write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value + 0x2000)
 
 

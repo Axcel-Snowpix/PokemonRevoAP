@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle, NamedRange, OptionSet
+from Options import Choice, OptionGroup, PerGameCommonOptions, Range, DefaultOnToggle, NamedRange, OptionSet
 
 class GoalUnlockMethod(Choice):
     """

@@ -1,7 +1,5 @@
 from worlds.LauncherComponents import Component, Type, components, launch, SuffixIdentifier, icon_paths
 
-from .rom import PBRPatch
-
 
 def run_client(*args: str) -> None:
     from .pbr_client import main

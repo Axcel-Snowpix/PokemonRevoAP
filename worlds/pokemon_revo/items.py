@@ -13,7 +13,7 @@ class PBRItemData(NamedTuple):
     """
     This class represents the data for an item in Pokémon Battle Revolution.
 
-    :param group: The group the item is in (e.g. "Colosseum Set 1", "Rental Passes").
+    :param group: The group the item is in (e.g. "Colosseums", "Rental Passes").
     :param classification: The item's classification (progression, useful, filler).
     :param code: The unique code identifier for the item.
     :param value: A special value used for giving the item to the player.

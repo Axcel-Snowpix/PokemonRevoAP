@@ -4,7 +4,7 @@ import bsdiff4
 import pkgutil
 import shutil
 import disc_riider_py
-from typing import TYPE_CHECKING, Dict, Any
+from typing import Dict, Any
 
 from worlds.Files import APAutoPatchInterface
 from settings import get_settings

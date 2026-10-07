@@ -37,6 +37,8 @@ Daisy's Rental Pass: 0x24EFD
 Joel's Rental Pass: 0x255E9
 Natalie's Rental Pass: 0x25CD5
 
+Flags #383-#390: 0x12565
+
 Rental Pass Bits:
 
 Rental Pass Available at Gateway: +0x08 | Bit Index 3

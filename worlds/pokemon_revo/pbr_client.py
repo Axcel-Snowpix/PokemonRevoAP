@@ -381,7 +381,11 @@ def check_ingame() -> bool:
 
     :return: `True` if the player is in-game, otherwise `False`.
     """
-    return dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0
+    save_file_address = find_save_file_address()
+    return (
+        dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0 and
+        bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1)
+    )
 
 
 async def dolphin_sync_task(ctx: PBRContext) -> None:

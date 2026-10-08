@@ -52,6 +52,17 @@ SAVE_SLOT_OFFSET = 0x6FF00
 # The expected index for the following item that should be received.
 EXPECTED_INDEX_OFFSET = 0x68530
 
+# A custom string in the save file, used to check if it was made with an AP ROM.
+AP_SAVE_CHECK = 0x69000
+
+# The Player's slot name, placed in the save file.
+# Used to check if the client is reading the correct save for the multiworld
+SAVE_SLOT_NAME = 0x69004
+
+# The multiworld's seed, placed in the save file.
+# Used to check if the client is reading the correct save for the multiworld
+SAVE_SEED = 0x69014
+
 # The address containing the slot name, used for server authentication.
 # TODO: Find a proper address for this, then reimplement automatic server authentication.
 # SLOT_NAME_ADDR = 0x80000006
@@ -238,7 +249,7 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
     :param item_name: Name of the item to give.
     :return: Whether the item was successfully given.
     """
-    if not check_ingame():
+    if not check_correct_save(ctx):
         return False
 
     save_file_address = find_save_file_address()
@@ -281,7 +292,7 @@ async def give_items(ctx: PBRContext) -> None:
 
     :param ctx: Pokémon Battle Revolution client context.
     """
-    if check_ingame():
+    if check_correct_save(ctx):
         save_file_address = find_save_file_address()
 
         # Read the expected index of the player, which is the index of the next item they're expecting to receive.
@@ -315,64 +326,87 @@ async def check_locations(ctx: PBRContext) -> None:
 
     :param ctx: Pokémon Battle Revolution client context.
     """
-    save_file_address = find_save_file_address()
+    if check_correct_save(ctx):
+        save_file_address = find_save_file_address()
 
-    # Loop through all locations to see if each has been checked.
-    for location, data in LOCATION_TABLE.items():
-        checked = False
-        if data.group == "Colosseum Clears":
-            colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.value)
-            if colosseum_clears > 0x0:
-                checked = True
-        elif data.group == "Rental Pass Checks":
-            pass_checks = dolphin_memory_engine.read_byte(save_file_address + PASS_CHECKS_OFFSET)
-            if bool((pass_checks >> data.value) & 1):
-                checked = True
+        # Loop through all locations to see if each has been checked.
+        for location, data in LOCATION_TABLE.items():
+            checked = False
+            if data.group == "Colosseum Clears":
+                colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.value)
+                if colosseum_clears > 0x0:
+                    checked = True
+            elif data.group == "Rental Pass Checks":
+                pass_checks = dolphin_memory_engine.read_byte(save_file_address + PASS_CHECKS_OFFSET)
+                if bool((pass_checks >> data.value) & 1):
+                    checked = True
 
-        if checked:
-            if location == "Stargazer Colosseum - Clear":
-                if not ctx.finished_game:
-                    await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-                    ctx.finished_game = True
-            else:
-                ctx.locations_checked.add(data.code)
+            if checked:
+                if location == "Stargazer Colosseum - Clear":
+                    if not ctx.finished_game:
+                        await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                        ctx.finished_game = True
+                else:
+                    ctx.locations_checked.add(data.code)
 
-    # Send the list of newly-checked locations to the server.
-    locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
-    if locations_checked:
-        await ctx.send_msgs([{"cmd": "LocationChecks", "locations": locations_checked}])
+        # Send the list of newly-checked locations to the server.
+        locations_checked = ctx.locations_checked.difference(ctx.checked_locations)
+        if locations_checked:
+            await ctx.send_msgs([{"cmd": "LocationChecks", "locations": locations_checked}])
 
 
 async def check_stargazer_unlock(ctx: PBRContext) -> None:
     """
     Checks if the condition to unlock Stargazer Colosseum has been met.
     """
-    save_file_address = find_save_file_address()
-    colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
-    badge_hunt_req = False
-    colosseum_clear_req = False
+    if check_correct_save(ctx):
+        save_file_address = find_save_file_address()
+        colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
+        badge_hunt_req = False
+        colosseum_clear_req = False
 
-    if not bool((colo_flag_value >> 13) & 1):
-        if ctx.slot_data["goal_unlock_method"] != 1:
-            current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
-            if current_badge_count >= ctx.slot_data["required_badge_amount"]:
+        if not bool((colo_flag_value >> 13) & 1):
+            if ctx.slot_data["goal_unlock_method"] != 1:
+                current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
+                if current_badge_count >= ctx.slot_data["required_badge_amount"]:
+                    badge_hunt_req = True
+            else:
                 badge_hunt_req = True
-        else:
-            badge_hunt_req = True
 
-        if ctx.slot_data["goal_unlock_method"] != 0:
-            for location, data in LOCATION_TABLE.items():
-                if data.group == "Colosseum Clears":
-                    colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.value)
-                    if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
-                        ctx.colosseums_cleared.append(data.region)
-            if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
+            if ctx.slot_data["goal_unlock_method"] != 0:
+                for location, data in LOCATION_TABLE.items():
+                    if data.group == "Colosseum Clears":
+                        colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.value)
+                        if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
+                            ctx.colosseums_cleared.append(data.region)
+                if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
+                    colosseum_clear_req = True
+            else:
                 colosseum_clear_req = True
+                
+            if badge_hunt_req and colosseum_clear_req:
+                write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | 0x2000)
+
+def check_correct_save(ctx: PBRContext) -> bool:
+    """
+    Check if the currently loaded save file is the correct one for the current multiworld.
+
+    :return: `True` if it's the correct save, otherwise `False`.
+    """
+    save_file_address = find_save_file_address()
+    if check_ingame():
+        save_check = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + SAVE_SLOT_NAME, 26), byteorder="big")
+        if save_check == 0:
+            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
+            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.seed_name.encode('utf-8')[0:10])
+            return True
         else:
-            colosseum_clear_req = True
-            
-        if badge_hunt_req and colosseum_clear_req:
-            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | 0x2000)
+            save_name = read_string(save_file_address + SAVE_SLOT_NAME, 16)
+            save_seed = read_string(save_file_address + SAVE_SEED, 10)
+            if save_name == ctx.username and save_seed == ctx.seed_name[0:10]:
+                return True
+    # Return False if all other conditions are not met.
+    return False
 
 
 def check_ingame() -> bool:
@@ -384,7 +418,8 @@ def check_ingame() -> bool:
     save_file_address = find_save_file_address()
     return (
         dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0 and
-        bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1)
+        bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1) and
+        read_string(save_file_address + AP_SAVE_CHECK, 4) == "APBR"
     )
 
 
@@ -414,9 +449,10 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     sleep_time = 0.1
                     continue
                 if ctx.slot is not None:
-                    await give_items(ctx)
-                    await check_locations(ctx)
-                    await check_stargazer_unlock(ctx)
+                    if check_correct_save(ctx):
+                        await give_items(ctx)
+                        await check_locations(ctx)
+                        await check_stargazer_unlock(ctx)
                 #else:
                 #    if not ctx.auth:
                 #        ctx.auth = read_string(SLOT_NAME_ADDR, 16)

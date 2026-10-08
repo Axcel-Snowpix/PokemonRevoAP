@@ -117,12 +117,22 @@ The function seems to run every time you beat a colosseum
 Flags 0x1ff, 0x200, 0x194, 0x201, 0x202 and 0x195 are turned on if the player has beaten Main Street and Waterfall
 Flags 0x203, 0x204, 0x196, 0x205, 0x206 and 0x197 are turned on if the player has beaten Neon, Crystal and Sunny Park, as well as having unlocked at least 2 Rental Passes
 
+
 80626e9b tracks what menu button the cursor is hovering over
 80626ea3 tracks what menu button the Wii Remote pointer is hovering over
 FUN_8005b5ec seems to be responsible for dealing with the cursor in menus
 8005ba88 sets the default menu button the cursor should hover over when entering a new menu, with set default button being param_2
 800852e8 is the call to FUN_8005b5ec that sets the default cursor position when entering the Colosseums menu, with param_2 being DAT_8062700c
 80084de4 is where DAT_8062700c gets set to 2 (Main Street Colosseum)
+
+
+SetButtonDPadMapping (FUN_80053fe8) sets the d-pad mappings for a specific menu button id, taking a base address as a parameter, which it uses to find the location of each mapping in memory
+
+SetButtonDPadMappingFrom0x8044c258 (FUN_8005b548) calls SetButtonDPadMapping with 0x8044c258 as the start_address parameter. It also sets DAT_8044d420 + button_id * 2 to param_6, not sure for what purpose this is though.
+
+SetGroupButtonDPadMapping (FUN_80084cac) runs a loop to set the mappings for multiple different buttons, using SetButtonDPadMappingFrom0x8044c258. It takes a memory address as a parameter, with a said memory address containing the start of a bunch 4 byte groups of button mappings, with each byte representing a direction (in the order of up left right and down). The loop will read a group of button mappings, set is as the mappings for a button id, increment the button id and then move on to the next group of mappings, rinse and repeat until one of the groups starts with 0xFF, which signal it to break the loop and end the function.
+
+FUN_80084d10, specifically from 0x80084f20 onwards, handles where pressing each direction on the d-pad should take you in the Colosseum Battle menu. It achieves this through a ton of nestled if-else statements, each one checking for if the player lacks at least 1 of a specific group of Colosseums, meant as a way to check for different game states. Once it finds a specific game state, it calls SetGroupButtonDPadMapping, with an address to a different set of mappings depending on the game state, and SetButtonDPadMappingFrom0x8044c258, to set the mappings for the return button, said mappings being 0 for every direction except for up, which is either 1 (Gateway) or 6 (Sunny Park) depending on the game state.
 
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)

@@ -44,6 +44,11 @@ Here's the requirements for each Rental Pass:
 No, currently there is no way to connect to the DS games in Dolphin.  
 However, you can still import Pokémon in using [PKHeX](https://projectpokemon.org/home/files/file/1-pkhex/), as the save file should still be compatible with it.
 
+## Known Issues
+
+The D-Pad controls are, for the most part, completely unusable when selecting a Colosseum to enter. Fixing this would take a complete rewrite of how this functions, so don't expect it for a bit.  
+For now, you can use the Wii Remote pointer instead.
+
 ## Credits
 
 ### Developers

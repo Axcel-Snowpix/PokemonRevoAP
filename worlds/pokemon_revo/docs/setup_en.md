@@ -59,8 +59,7 @@ Alternatively, you can double click your patch and set it to open with the Archi
 Once you do either of the above, wait a bit for it to finish patching. Once it does, the `Pokémon Battle Revolution Client` will automatically open, and you will find a patched `.iso` ROM in the same folder as the patch file.  
 
 Now that you have patched the game, open Dolphin and start the patched game.  
-Make sure to create a new save file **before connecting the client to the server**. This is to ensure that the client doesn't begin reading data from the wrong save file.  
-Once you've created a save file, go to the client and insert the server's information to connect to it.  
+Once you've started the game, go to the client and insert the server's information to connect to it.  
 Afterwards, you can freely go ahead and play the game.
 
 ### Continuing from a Previous Session

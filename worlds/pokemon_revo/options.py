@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import Choice, OptionGroup, PerGameCommonOptions, Range, DefaultOnToggle, NamedRange, OptionSet
+from Options import Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle, NamedRange, OptionSet
 
 class GoalUnlockMethod(Choice):
     """
@@ -46,6 +46,12 @@ class ColosseumClearCount(Range):
     range_start = 4
     range_end = 9
     default = 5
+
+class RemoveGoalLocations(DefaultOnToggle):
+    """
+    Whether locations in Stargazer Colosseum should be removed.
+    """
+    display_name = "Remove Goal Locations"
 
 class StartingColosseumAmount(NamedRange):
     """
@@ -99,24 +105,32 @@ class StartingRentalPass(Choice):
     option_natalie = 5
     default = "random"
 
+class Battlesanity(Toggle):
+    """
+    Adds checks for winning each battle in a Colosseum.
+    """
+    display_name = "Battlesanity"
+
 @dataclass
 class PBROptions(PerGameCommonOptions):
     goal_unlock_method: GoalUnlockMethod
     required_badge_amount: RequiredBadgeAmount
     total_badge_amount: TotalBadgeAmount
     colosseum_clear_count: ColosseumClearCount
+    remove_goal_locations: RemoveGoalLocations
     starting_colosseum_amount: StartingColosseumAmount
     starting_colosseum_pool: StartingColosseumPool
     randomize_rental_passes: RandomizeRentalPasses
     starting_rental_pass: StartingRentalPass
+    battlesanity: Battlesanity
 
 option_groups = [
     OptionGroup(
         "Goal Options",
-        [GoalUnlockMethod, RequiredBadgeAmount, TotalBadgeAmount, ColosseumClearCount],
+        [GoalUnlockMethod, RequiredBadgeAmount, TotalBadgeAmount, ColosseumClearCount, RemoveGoalLocations],
     ),
     OptionGroup(
         "Main Options",
-        [StartingColosseumAmount, StartingColosseumPool, RandomizeRentalPasses, StartingRentalPass],
+        [StartingColosseumAmount, StartingColosseumPool, RandomizeRentalPasses, StartingRentalPass, Battlesanity],
     ),
 ]

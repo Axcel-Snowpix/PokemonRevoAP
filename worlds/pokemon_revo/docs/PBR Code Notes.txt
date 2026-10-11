@@ -95,8 +95,6 @@ Other addresses that check if a Rental Pass is in Gateway (not sure what these d
 	800dccd4
 	800c8930
 
-800cdbd4 may be starting rental pass call? probably not
-
 8008f0f8 handles the buttons in Colosseum Battle menu
 Cases 0x0-0x9 handle if you can select each colosseum
 From case 0xa onwards, even cases handle how to display the button icons,
@@ -133,6 +131,10 @@ SetButtonDPadMappingFrom0x8044c258 (FUN_8005b548) calls SetButtonDPadMapping wit
 SetGroupButtonDPadMapping (FUN_80084cac) runs a loop to set the mappings for multiple different buttons, using SetButtonDPadMappingFrom0x8044c258. It takes a memory address as a parameter, with a said memory address containing the start of a bunch 4 byte groups of button mappings, with each byte representing a direction (in the order of up left right and down). The loop will read a group of button mappings, set is as the mappings for a button id, increment the button id and then move on to the next group of mappings, rinse and repeat until one of the groups starts with 0xFF, which signal it to break the loop and end the function.
 
 FUN_80084d10, specifically from 0x80084f20 onwards, handles where pressing each direction on the d-pad should take you in the Colosseum Battle menu. It achieves this through a ton of nestled if-else statements, each one checking for if the player lacks at least 1 of a specific group of Colosseums, meant as a way to check for different game states. Once it finds a specific game state, it calls SetGroupButtonDPadMapping, with an address to a different set of mappings depending on the game state, and SetButtonDPadMappingFrom0x8044c258, to set the mappings for the return button, said mappings being 0 for every direction except for up, which is either 1 (Gateway) or 6 (Sunny Park) depending on the game state.
+
+
+FUN_80138130 handles updating the number of the current battle after a win.
+It gets called at 80078a54 in FUN_80077174
 
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)

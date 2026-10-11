@@ -31,32 +31,90 @@ class PBRLocation(Location):
 
 
 LOCATION_TABLE: dict[str, PBRLocationData] = {
-    "Gateway Colosseum - Clear Check #1":     PBRLocationData("Colosseum Clears", 1,    "Gateway Colosseum",     0x124F0),
-    "Gateway Colosseum - Clear Check #2":     PBRLocationData("Colosseum Clears", 2,    "Gateway Colosseum",     0x124F0),
-    "Main Street Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 3,    "Main Street Colosseum", 0x124F7),
-    "Main Street Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 4,    "Main Street Colosseum", 0x124F7),
-    "Waterfall Colosseum - Clear Check #1":   PBRLocationData("Colosseum Clears", 5,    "Waterfall Colosseum",   0x124F6),
-    "Waterfall Colosseum - Clear Check #2":   PBRLocationData("Colosseum Clears", 6,    "Waterfall Colosseum",   0x124F6),
-    "Neon Colosseum - Clear Check #1":        PBRLocationData("Colosseum Clears", 7,    "Neon Colosseum",        0x124F5),
-    "Neon Colosseum - Clear Check #2":        PBRLocationData("Colosseum Clears", 8,    "Neon Colosseum",        0x124F5),
-    "Crystal Colosseum - Clear Check #1":     PBRLocationData("Colosseum Clears", 9,    "Crystal Colosseum",     0x124F4),
-    "Crystal Colosseum - Clear Check #2":     PBRLocationData("Colosseum Clears", 10,   "Crystal Colosseum",     0x124F4),
-    "Sunny Park Colosseum - Clear Check #1":  PBRLocationData("Colosseum Clears", 11,   "Sunny Park Colosseum",  0x124FB),
-    "Sunny Park Colosseum - Clear Check #2":  PBRLocationData("Colosseum Clears", 12,   "Sunny Park Colosseum",  0x124FB),
-    "Magma Colosseum - Clear Check #1":       PBRLocationData("Colosseum Clears", 13,   "Magma Colosseum",       0x124FA),
-    "Magma Colosseum - Clear Check #2":       PBRLocationData("Colosseum Clears", 14,   "Magma Colosseum",       0x124FA),
-    "Courtyard Colosseum - Clear Check #1":   PBRLocationData("Colosseum Clears", 15,   "Courtyard Colosseum",   0x124F9),
-    "Courtyard Colosseum - Clear Check #2":   PBRLocationData("Colosseum Clears", 16,   "Courtyard Colosseum",   0x124F9),
-    "Sunset Colosseum - Clear Check #1":      PBRLocationData("Colosseum Clears", 17,   "Sunset Colosseum",      0x124F8),
-    "Sunset Colosseum - Clear Check #2":      PBRLocationData("Colosseum Clears", 18,   "Sunset Colosseum",      0x124F8),
-    "Stargazer Colosseum - Clear":            PBRLocationData("Colosseum Clears", None, "Stargazer Colosseum",   0x124FF),
+    "Gateway Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 1, "Gateway Colosseum", 0x124F0),
+    "Gateway Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 2, "Gateway Colosseum", 0x124F0),
+    "Main Street Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 3, "Main Street Colosseum", 0x124F7),
+    "Main Street Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 4, "Main Street Colosseum", 0x124F7),
+    "Waterfall Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 5, "Waterfall Colosseum", 0x124F6),
+    "Waterfall Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 6, "Waterfall Colosseum", 0x124F6),
+    "Neon Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 7, "Neon Colosseum", 0x124F5),
+    "Neon Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 8, "Neon Colosseum", 0x124F5),
+    "Crystal Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 9, "Crystal Colosseum", 0x124F4),
+    "Crystal Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 10, "Crystal Colosseum", 0x124F4),
+    "Sunny Park Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 11, "Sunny Park Colosseum", 0x124FB),
+    "Sunny Park Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 12, "Sunny Park Colosseum", 0x124FB),
+    "Magma Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 13, "Magma Colosseum", 0x124FA),
+    "Magma Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 14, "Magma Colosseum", 0x124FA),
+    "Courtyard Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 15, "Courtyard Colosseum", 0x124F9),
+    "Courtyard Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 16, "Courtyard Colosseum", 0x124F9),
+    "Sunset Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 17, "Sunset Colosseum", 0x124F8),
+    "Sunset Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 18, "Sunset Colosseum", 0x124F8),
+    "Stargazer Colosseum - Goal": PBRLocationData("Colosseum Clears", None, "Stargazer Colosseum", 0x124FF),
 
-    "Gateway Colosseum - Borrow Cyndy's Rental Pass":   PBRLocationData("Rental Pass Checks", 19, "Gateway Colosseum", 0),
-    "Gateway Colosseum - Borrow Nate's Rental Pass":    PBRLocationData("Rental Pass Checks", 20, "Gateway Colosseum", 1),
-    "Gateway Colosseum - Borrow Tommy's Rental Pass":   PBRLocationData("Rental Pass Checks", 21, "Gateway Colosseum", 2),
-    "Gateway Colosseum - Borrow Daisy's Rental Pass":   PBRLocationData("Rental Pass Checks", 22, "Gateway Colosseum", 3),
-    "Gateway Colosseum - Borrow Joel's Rental Pass":    PBRLocationData("Rental Pass Checks", 23, "Gateway Colosseum", 4),
+    "Gateway Colosseum - Borrow Cyndy's Rental Pass": PBRLocationData("Rental Pass Checks", 19, "Gateway Colosseum", 0),
+    "Gateway Colosseum - Borrow Nate's Rental Pass": PBRLocationData("Rental Pass Checks", 20, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Borrow Tommy's Rental Pass": PBRLocationData("Rental Pass Checks", 21, "Gateway Colosseum", 2),
+    "Gateway Colosseum - Borrow Daisy's Rental Pass": PBRLocationData("Rental Pass Checks", 22, "Gateway Colosseum", 3),
+    "Gateway Colosseum - Borrow Joel's Rental Pass": PBRLocationData("Rental Pass Checks", 23, "Gateway Colosseum", 4),
     "Gateway Colosseum - Borrow Natalie's Rental Pass": PBRLocationData("Rental Pass Checks", 24, "Gateway Colosseum", 5),
+
+    "Gateway Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 25, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 26, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 27, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 28, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 29, "Gateway Colosseum", 1),
+    "Gateway Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 30, "Gateway Colosseum", 1),
+    "Main Street Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 31, "Main Street Colosseum", 1),
+    "Main Street Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 32, "Main Street Colosseum", 1),
+    "Main Street Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 33, "Main Street Colosseum", 1),
+    "Main Street Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 34, "Main Street Colosseum", 1),
+    "Main Street Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 35, "Main Street Colosseum", 1),
+    "Main Street Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 36, "Main Street Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 37, "Waterfall Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 38, "Waterfall Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 39, "Waterfall Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 40, "Waterfall Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 41, "Waterfall Colosseum", 1),
+    "Waterfall Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 42, "Waterfall Colosseum", 1),
+    "Neon Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 43, "Neon Colosseum", 1),
+    "Neon Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 44, "Neon Colosseum", 1),
+    "Neon Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 45, "Neon Colosseum", 1),
+    "Neon Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 46, "Neon Colosseum", 1),
+    "Neon Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 47, "Neon Colosseum", 1),
+    "Neon Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 48, "Neon Colosseum", 1),
+    "Crystal Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 49, "Crystal Colosseum", 1),
+    "Crystal Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 50, "Crystal Colosseum", 1),
+    "Crystal Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 51, "Crystal Colosseum", 1),
+    "Crystal Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 52, "Crystal Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 53, "Sunny Park Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 54, "Sunny Park Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 55, "Sunny Park Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 56, "Sunny Park Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 57, "Sunny Park Colosseum", 1),
+    "Sunny Park Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 58, "Sunny Park Colosseum", 1),
+    "Magma Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 59, "Magma Colosseum", 1),
+    "Magma Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 60, "Magma Colosseum", 1),
+    "Magma Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 61, "Magma Colosseum", 1),
+    "Magma Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 62, "Magma Colosseum", 1),
+    "Magma Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 63, "Magma Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 64, "Courtyard Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 65, "Courtyard Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 66, "Courtyard Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 67, "Courtyard Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 68, "Courtyard Colosseum", 1),
+    "Courtyard Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 69, "Courtyard Colosseum", 1),
+    "Sunset Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 70, "Sunset Colosseum", 1),
+    "Sunset Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 71, "Sunset Colosseum", 1),
+    "Sunset Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 72, "Sunset Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 1": PBRLocationData("Battlesanity", 73, "Stargazer Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 2": PBRLocationData("Battlesanity", 74, "Stargazer Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 3": PBRLocationData("Battlesanity", 75, "Stargazer Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 4": PBRLocationData("Battlesanity", 76, "Stargazer Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 5": PBRLocationData("Battlesanity", 77, "Stargazer Colosseum", 1),
+    "Stargazer Colosseum - Win Battle 6": PBRLocationData("Battlesanity", 78, "Stargazer Colosseum", 1),
+    
+    "Stargazer Colosseum - Clear Check #1": PBRLocationData("Colosseum Clears", 79, "Stargazer Colosseum", 0x124FF),
+    "Stargazer Colosseum - Clear Check #2": PBRLocationData("Colosseum Clears", 80, "Stargazer Colosseum", 0x124FF),
 }
 
 
@@ -65,15 +123,24 @@ def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | No
 
 
 def create_all_locations(world: PBRWorld) -> None:
+    remove = False
     for location, data in LOCATION_TABLE.items():
         if data.code == None:
             region = world.get_region(data.region)
             region.add_event(
                 location, "Victory", location_type=PBRLocation, item_type=items.PBRItem
             )
-        elif data.group != "Rental Pass Checks" or world.options.randomize_rental_passes:
-            region = world.get_region(data.region)
-            region.add_locations({location: data.code}, PBRLocation)
+        else:
+            if data.code == "Rental Pass Checks" and not world.options.randomize_rental_passes:
+                remove = True
+            if data.code == "Battlesanity" and not world.options.battlesanity:
+                remove = True
+            if data.region == "Stargazer Colosseum" and world.options.remove_goal_locations:
+                remove = True
+
+            if not remove:
+                region = world.get_region(data.region)
+                region.add_locations({location: data.code}, PBRLocation)
 
 location_name_groups = {
     "Colosseum Clears": set(),

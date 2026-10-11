@@ -341,7 +341,7 @@ async def check_locations(ctx: PBRContext) -> None:
                     checked = True
 
             if checked:
-                if location == "Stargazer Colosseum - Clear":
+                if data.code == None:
                     if not ctx.finished_game:
                         await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                         ctx.finished_game = True

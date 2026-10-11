@@ -135,6 +135,21 @@ FUN_80084d10, specifically from 0x80084f20 onwards, handles where pressing each 
 
 FUN_80138130 handles updating the number of the current battle after a win.
 It gets called at 80078a54 in FUN_80077174
+806257f8 points to 8044fa90, which, at an offset of 0x30, stores a pointer to a set of data, which, at an offset of 0xc, stores whether the player is in a Colosseum (value of 0) or a Free Battle (value of 1)
+This is used to check for what to do once the player presses a button after winning.
+field 0x585EC of the save slot at an offset of 0x10 contains the ID for the current Colosseum
+
+Colosseum IDs at field 0x585EC[0x10]:
+0x3E8 = Gateway Colosseum
+0x3E9 = Main Street Colosseum
+0x3EA = Waterfall Colosseum
+0x3EB = Neon Colosseum
+0x3EC = Crystal Colosseum
+0x3ED = Sunny Park Colosseum
+0x3EE = Magma Colosseum
+0x3EF = Courtyard Colosseum
+0x3F0 = Sunset Colosseum
+0x3F1 = Stargazer Colosseum
 
 
 0x806251b8 - Pointer To Some Table About The Bitflag In The Save File, Set At Runtime (Maybe loaded from fsys file?)

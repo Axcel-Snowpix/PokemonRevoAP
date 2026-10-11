@@ -39,6 +39,10 @@ Natalie's Rental Pass: 0x25CD5
 
 Flags #383-#390: 0x12565
 
+Total Battles Byte 1: 0x124EA
+Total Battles Byte 2: 0x124EB
+Total Battles Byte 3: 0x124E4
+
 Rental Pass Bits:
 
 Rental Pass Available at Gateway: +0x08 | Bit Index 3

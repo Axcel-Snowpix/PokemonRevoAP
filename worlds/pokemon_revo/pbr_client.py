@@ -50,7 +50,7 @@ SAVE_SLOT_START = 0x380
 SAVE_SLOT_OFFSET = 0x6FF00
 
 # The expected index for the following item that should be received.
-EXPECTED_INDEX_OFFSET = 0x68530
+EXPECTED_INDEX_OFFSET = 0x6901E
 
 # A custom string in the save file, used to check if it was made with an AP ROM.
 AP_SAVE_CHECK = 0x69000
@@ -68,7 +68,7 @@ SAVE_SEED = 0x69014
 # SLOT_NAME_ADDR = 0x80000006
 
 # The offset containing the player's Pokétopia Badges.
-BADGE_COUNT = 0x68532
+BADGE_COUNT = 0x69020
 
 # Offset for the unlocked Colosseums bitfield.
 # Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
@@ -77,10 +77,10 @@ COLOSSEUMS_BITFIELD = 0x12508
 
 # Offset for a custom bitfield that tracks your unlocked Rental Passes.
 # This is needed so that the game won't remove your unlocked Rental Passes when doing the checks in Gateway.
-PASS_UNLOCK_BITFIELD = 0x68534
+PASS_UNLOCK_BITFIELD = 0x69022
 
 # The offset to the bitfield that tracks the Rental Pass locations.
-PASS_CHECKS_OFFSET = 0x68533
+PASS_CHECKS_OFFSET = 0x69021
 
 # Offset for Player's Poké Coupons.
 POKE_COUPONS = 0x124E1

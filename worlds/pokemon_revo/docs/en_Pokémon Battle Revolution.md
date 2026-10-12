@@ -65,4 +65,5 @@ For now, you can use the Wii Remote pointer instead.
 - Pokechu22 (Fix Black Screen Effects Patch)
 - PJSamm (PBR Docs)
 - PKHeX (Useful Memory Addresses)
-  
+- APQuest (Base for the APWorld Code)
+- The Wind Waker AP (Base for the Client Code)

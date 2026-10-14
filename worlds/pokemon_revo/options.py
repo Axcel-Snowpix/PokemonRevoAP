@@ -23,7 +23,7 @@ class RequiredBadgeAmount(Range):
     """
     display_name = "Required Badge Amount"
     range_start = 3
-    range_end = 10
+    range_end = 50
     default = 5
 
 class TotalBadgeAmount(Range):
@@ -34,7 +34,7 @@ class TotalBadgeAmount(Range):
     """
     display_name = "Total Badge Amount"
     range_start = 3
-    range_end = 10
+    range_end = 50
     default = 8
 
 class ColosseumClearCount(Range):

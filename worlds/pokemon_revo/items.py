@@ -84,7 +84,7 @@ def create_all_items(world: PBRWorld) -> None:
 WARNING: {world.player_name} does not have enough Colosseums in the Starting Colosseum Pool.
 Random Colosseums will be added to the pool until there is enough."""
 
-    badges_warning = f"""
+    low_total_badges_warning = f"""
 WARNING: {world.player_name}'s Required Badge Amount is lower than their Total Badge Amount.
 The total amount of badges will be raised to match the number of required badges."""
 
@@ -117,29 +117,51 @@ The total amount of badges will be raised to match the number of required badges
     else:
         starting_colosseums = ["Gateway Colosseum", "Main Street Colosseum"]
 
+    is_ut = getattr(world.multiworld, "generation_is_fake", False)
+
     for item, data in ITEM_TABLE.items():
         if data.group == "Colosseums":
-            if item in starting_colosseums:
+            if item in starting_colosseums and not is_ut:
                 world.push_precollected(world.create_item(item))
             else:
                 itempool.append(world.create_item(item))
         elif data.group == "Rental Passes" and world.options.randomize_rental_passes:
             starter_pass_check = item.lower().removesuffix("'s rental pass")
-            if world.options.starting_rental_pass == starter_pass_check:
+            if world.options.starting_rental_pass == starter_pass_check and not is_ut:
                 world.push_precollected(world.create_item(item))
             else:
                 itempool.append(world.create_item(item))
         elif data.group == "Macguffin" and world.options.goal_unlock_method != "colosseum_clears":
             if world.options.total_badge_amount < world.options.required_badge_amount:
-                logging.warning(badges_warning)
-                total_badges = world.options.required_badge_amount
-            else:
-                total_badges = world.options.total_badge_amount
-            for _ in range(0,total_badges):
+                logging.warning(low_total_badges_warning)
+                world.options.total_badge_amount.value = world.options.required_badge_amount.value
+            for _ in range(world.options.total_badge_amount):
                 itempool.append(world.create_item(item))
 
     number_of_items = len(itempool)
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
+
+    if number_of_items > number_of_unfilled_locations:
+        excess_items = number_of_items - number_of_unfilled_locations
+        for _ in range(excess_items):
+            itempool.remove(world.create_item("Pokétopia Badge"))
+        new_number_of_badges = len([item for item in itempool if item == world.create_item("Pokétopia Badge")])
+
+        excess_total_badges_warning = f"""
+WARNING: {world.player_name}'s Total Badge Amount is higher than the number of available locations.
+The total number of badges will be decreased to {new_number_of_badges}."""
+
+        excess_required_badges_warning = f"""
+WARNING: {world.player_name}'s Required Badge Amount is higher than the number of available locations.
+The number of required badges will be decreased to {new_number_of_badges}."""
+    
+        if world.options.total_badge_amount > new_number_of_badges:
+            logging.warning(excess_total_badges_warning)
+            world.options.total_badge_amount.value = new_number_of_badges
+        if world.options.required_badge_amount > new_number_of_badges:
+            logging.warning(excess_required_badges_warning)
+            world.options.required_badge_amount.value = new_number_of_badges
+
     needed_number_of_filler_items = number_of_unfilled_locations - number_of_items
     itempool += [world.create_filler() for _ in range(needed_number_of_filler_items)]
 

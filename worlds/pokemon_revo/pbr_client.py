@@ -49,9 +49,6 @@ SAVE_SLOT_START = 0x380
 # The offset from the first save profile to every one past it.
 SAVE_SLOT_OFFSET = 0x6FF00
 
-# The expected index for the following item that should be received.
-EXPECTED_INDEX_OFFSET = 0x6901E
-
 # A custom string in the save file, used to check if it was made with an AP ROM.
 AP_SAVE_CHECK = 0x69000
 
@@ -63,24 +60,20 @@ SAVE_SLOT_NAME = 0x69004
 # Used to check if the client is reading the correct save for the multiworld
 SAVE_SEED = 0x69014
 
-# The address containing the slot name, used for server authentication.
-# TODO: Find a proper address for this, then reimplement automatic server authentication.
-# SLOT_NAME_ADDR = 0x80000006
+# The expected index for the following item that should be received.
+EXPECTED_INDEX_OFFSET = 0x6901E
 
 # The offset containing the player's Pokétopia Badges.
 BADGE_COUNT = 0x69020
-
-# Offset for the unlocked Colosseums bitfield.
-# Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
-# Byte 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
-COLOSSEUMS_BITFIELD = 0x12508
 
 # Offset for a custom bitfield that tracks your unlocked Rental Passes.
 # This is needed so that the game won't remove your unlocked Rental Passes when doing the checks in Gateway.
 PASS_UNLOCK_BITFIELD = 0x69022
 
-# The offset to the bitfield that tracks the Rental Pass locations.
-PASS_CHECKS_OFFSET = 0x69021
+# Offset for the unlocked Colosseums bitfield.
+# Byte 1 is for Gateway, Main Street, Waterfall and Neon Colosseums.
+# Byte 2 is for Crystal, Sunny Park, Magma, Courtyard, Sunset and Stargazer Colosseums.
+COLOSSEUMS_BITFIELD = 0x12508
 
 # Offset for Player's Poké Coupons.
 POKE_COUPONS = 0x124E1
@@ -331,13 +324,12 @@ async def check_locations(ctx: PBRContext) -> None:
         # Loop through all locations to see if each has been checked.
         for location, data in LOCATION_TABLE.items():
             checked = False
-            if data.group == "Colosseum Clears":
-                colosseum_clears = dolphin_memory_engine.read_byte(save_file_address + data.value)
-                if colosseum_clears > 0x0:
+            check_value = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+            if data.bit == None:
+                if check_value > 0x0:
                     checked = True
-            elif data.group == "Rental Pass Checks":
-                pass_checks = dolphin_memory_engine.read_byte(save_file_address + PASS_CHECKS_OFFSET)
-                if bool((pass_checks >> data.value) & 1):
+            else:
+                if bool((check_value >> data.bit) & 1):
                     checked = True
 
             if checked:
@@ -375,7 +367,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             if ctx.slot_data["goal_unlock_method"] != 0:
                 for location, data in LOCATION_TABLE.items():
                     if data.group == "Colosseum Clears":
-                        colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.value)
+                        colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.bit)
                         if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
                             ctx.colosseums_cleared.append(data.region)
                 if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
@@ -397,12 +389,12 @@ def check_correct_save(ctx: PBRContext) -> bool:
         save_check = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + SAVE_SLOT_NAME, 26), byteorder="big")
         if save_check == 0:
             dolphin_memory_engine.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
-            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.seed_name.encode('utf-8')[0:10])
+            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.server_seed_name.encode('utf-8')[0:10])
             return True
         else:
             save_name = read_string(save_file_address + SAVE_SLOT_NAME, 16)
             save_seed = read_string(save_file_address + SAVE_SEED, 10)
-            if save_name == ctx.username and save_seed == ctx.seed_name[0:10]:
+            if save_name == ctx.username and save_seed == ctx.server_seed_name[0:10]:
                 return True
     # Return False if all other conditions are not met.
     return False

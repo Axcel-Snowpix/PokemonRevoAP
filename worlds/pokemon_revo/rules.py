@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from Utils import logging
+
 from rule_builder.options import OptionFilter
 from rule_builder.rules import Has, HasAll, Rule, HasFromList
 

@@ -3,7 +3,8 @@ import zipfile
 import bsdiff4
 import pkgutil
 import shutil
-import disc_riider_py
+from .data import disc_riider_py
+import json
 from typing import Dict, Any
 
 from worlds.Files import APAutoPatchInterface
@@ -33,7 +34,7 @@ class PBRPatch(APAutoPatchInterface):
 
     def patch(self, target):
         self.read()
-        options = self.get_file("options.json")
+        options = json.loads(self.get_file("options.json").decode("utf-8"))
         base_dol_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/base_dol_patch.bsdiff")
         common_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/common_fsys_patch.bsdiff")
         iso_path = get_settings().pokemon_battle_revolution_settings.rom_file
@@ -55,10 +56,14 @@ class PBRPatch(APAutoPatchInterface):
             main_dol_bytes = bytes(main_dol.read())
         print("Adding Base main.dol Patch...")
         patched_dol = bsdiff4.patch(main_dol_bytes, base_dol_patch)
-        if '\"randomize_rental_passes\": 1'.encode("utf8") in options:
+        if options["randomize_rental_passes"]:
             pass_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/rental_pass_rando_patch.bsdiff")
             print("Adding Rental Pass Randomizer Patch...")
             patched_dol = bsdiff4.patch(patched_dol, pass_patch)
+        if options["battlesanity"]:
+            battlesanity_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/battlesanity_patch.bsdiff")
+            print("Adding Battlesanity Patch...")
+            patched_dol = bsdiff4.patch(patched_dol, battlesanity_patch)
         print("Saving Patched main.dol...")
         with open(main_dol_path, "wb") as main_dol:
             main_dol.write(patched_dol)

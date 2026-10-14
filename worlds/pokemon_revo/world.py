@@ -13,7 +13,6 @@ from . import options as pbr_options  # rename due to a name conflict with World
 from .items import ITEM_TABLE, item_name_groups
 from .locations import LOCATION_TABLE, location_name_groups
 from .rom import PBRPatch
-from ..Files import APPlayerContainer
 
 class PBRSettings(settings.Group):
     class PBRRomFile(settings.UserFilePath):
@@ -87,17 +86,18 @@ class PBRWorld(World):
     def generate_output(self, output_directory: str) -> None:
         patch = PBRPatch(player=self.player, player_name=self.player_name)
 
-        options_file = self.options.as_dict("randomize_rental_passes")
+        options_file = self.options.as_dict("randomize_rental_passes", "battlesanity")
         patch.write_file("options.json", json.dumps(options_file).encode('utf-8'))
 
         out_file_name = self.multiworld.get_out_file_name_base(self.player)
         patch.write(os.path.join(output_directory, f"{out_file_name}{patch.patch_file_ending}"))
 
     def fill_slot_data(self) -> Mapping[str, Any]:
-        slot_data = self.options.as_dict(
+        return self.options.as_dict(
             "goal_unlock_method",
             "required_badge_amount",
             "colosseum_clear_count",
-            "randomize_rental_passes", 
+            "remove_goal_locations",
+            "randomize_rental_passes",
+            "battlesanity",
         )
-        return slot_data

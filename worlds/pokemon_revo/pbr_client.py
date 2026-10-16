@@ -78,6 +78,21 @@ COLOSSEUMS_BITFIELD = 0x12508
 # Offset for Player's Poké Coupons.
 POKE_COUPONS = 0x124E1
 
+# Offset for Battle Passes
+BATTLE_PASS_OFFSET = 0x134D8
+
+# Size of Rental/Battle Passes.
+BATTLE_PASS_SIZE = 0x6EC
+
+# Offset for Pokemon on a Battle Pass.
+BATTLE_PASS_PKMN_OFFSET = 0x1FC
+
+# Size of Pokemon Struct
+PKMM_SIZE = 0x88
+
+# Offset for Player's Copied Pokemon Boxes
+PKMN_BOXES_OFFSET = 0x5F8
+
 
 class PBRCommandProcessor(SuperCommandProcessor):
     """

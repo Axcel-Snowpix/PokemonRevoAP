@@ -46,8 +46,7 @@ However, you can still import Pokémon in using [PKHeX](https://projectpokemon.o
 
 ## Known Issues
 
-The D-Pad controls are, for the most part, completely unusable when selecting a Colosseum to enter. Fixing this would take a complete rewrite of how this functions, so don't expect it for a bit.  
-For now, you can use the Wii Remote pointer instead.
+None at the current moment.
 
 ## Credits
 

@@ -110,7 +110,7 @@ The total amount of badges will be raised to match the number of required badges
                 random_colosseum = world.random.randrange(0,len(colosseum_list))
                 colo_pool.add(colosseum_list[random_colosseum])
         for _ in range(0,world.options.starting_colosseum_amount):
-            colo_pool = list(colo_pool)
+            colo_pool = sorted(colo_pool)
             new_colosseum = world.random.randrange(0,len(colo_pool))
             starting_colosseums.append(colo_pool[new_colosseum])
             colo_pool.pop(new_colosseum)

@@ -29,7 +29,7 @@ CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
 )
 CONNECTION_REFUSED_SAVE_STATUS = (
-    "Dolphin failed to connect. Please load into the save file. Trying again in 5 seconds..."
+    "Dolphin failed to connect. Please load into a save file made for this Multiworld. Trying again in 5 seconds..."
 )
 CONNECTION_LOST_STATUS = (
     "Dolphin connection was lost. Please restart your emulator and make sure Pokémon Battle Revolution is running."
@@ -411,6 +411,7 @@ def check_correct_save(ctx: PBRContext) -> bool:
             save_seed = read_string(save_file_address + SAVE_SEED, 10)
             if save_name == ctx.username and save_seed == ctx.server_seed_name[0:10]:
                 return True
+            logger.info(CONNECTION_REFUSED_SAVE_STATUS)
     # Return False if all other conditions are not met.
     return False
 
@@ -423,7 +424,6 @@ def check_ingame() -> bool:
     """
     save_file_address = find_save_file_address()
     return (
-        dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0 and
         bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1) and
         read_string(save_file_address + AP_SAVE_CHECK, 4) == "APBR"
     )
@@ -459,6 +459,9 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                         await give_items(ctx)
                         await check_locations(ctx)
                         await check_stargazer_unlock(ctx)
+                    else:
+                        sleep_time = 5
+                        continue
                 #else:
                 #    if not ctx.auth:
                 #        ctx.auth = read_string(SLOT_NAME_ADDR, 16)

@@ -178,23 +178,14 @@ BITFLAG_TABLE_ENTRY (Each Entry is 0xC in Size)
 0x9 (byte) if true, does something after init in FUN_801673C8 to init again?
 
 
-The word at 91c0f4dc + 0x4 is read on loop at many points in the game
-It is read by FUN_8039a298, which is called at 801675f8
+A check for if the Player Pokémon fainted (may be useful?): 0x803b3a2c
 
-The byte at 91c0f4dc + 0x8 is read on loop at many points in the game
-It is read by FUN_8039a230, which is called at 801675e8
+Save Pokémon's HP After Healing/Taking Damage: 0x803cecc4
+When saving new HP value, r5 tracks the Pokémon's index number
 
-The word at 91c0d898 + 0x4 is read during the intro movie showcasing Pokétopia
-It is read by FUN_8039a298, which is called at 801675f8
+Switch Pokémon: 0x803bda0c
 
-The byte at 91c0d898 + 0x8 is read during the intro movie showcasing Pokétopia
-It is read by FUN_8039a230, which is called at 801675e8
-
-Various bytes and words are read on loop in Colosseum select menu
-This includes:
-91c0dae4, 91c0f4dc, 91c0da84, 91c0da90, 91c0da9c, 91c0daa8, 91c0dacc,
-91c0dac0, 91c0dad8, 91c0dab4, 91c0da6c, 91c0dafc, 91c0d8f8, 91c0da78,
-91c0d904
+FUN_8023f9b4 may be retire option?
 
 
 Fresh Save File Documentation

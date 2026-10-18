@@ -3,7 +3,6 @@ import zipfile
 import bsdiff4
 import pkgutil
 import shutil
-from .data import disc_riider_py
 import json
 from typing import Dict, Any
 
@@ -33,6 +32,8 @@ class PBRPatch(APAutoPatchInterface):
         return PBRPatch.source_data
 
     def patch(self, target):
+        import disc_riider_py
+        
         self.read()
         options = json.loads(self.get_file("options.json").decode("utf-8"))
         base_dol_patch = pkgutil.get_data(__name__[:__name__.rfind('.')], "patches/base_dol_patch.bsdiff")

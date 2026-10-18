@@ -397,12 +397,12 @@ def check_correct_save(ctx: PBRContext) -> bool:
         save_check = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + SAVE_SLOT_NAME, 26), byteorder="big")
         if save_check == 0:
             dolphin_memory_engine.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
-            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.seed_name.encode('utf-8')[0:10])
+            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.server_seed_name.encode('utf-8')[0:10])
             return True
         else:
             save_name = read_string(save_file_address + SAVE_SLOT_NAME, 16)
             save_seed = read_string(save_file_address + SAVE_SEED, 10)
-            if save_name == ctx.username and save_seed == ctx.seed_name[0:10]:
+            if save_name == ctx.username and save_seed == ctx.server_seed_name[0:10]:
                 return True
     # Return False if all other conditions are not met.
     return False
@@ -416,7 +416,6 @@ def check_ingame() -> bool:
     """
     save_file_address = find_save_file_address()
     return (
-        dolphin_memory_engine.read_byte(read_word(SAVE_FILE_FIND_ADDR)) != 0x0 and
         bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1) and
         read_string(save_file_address + AP_SAVE_CHECK, 4) == "APBR"
     )

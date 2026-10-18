@@ -2,7 +2,7 @@
 
 ## Required Software
 
-- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases/latest)
+- [Archipelago](https://github.com/ArchipelagoMW/Archipelago/releases/latest) (Note that if you're on Linux, you may need to use the tarball)
 - [Pokémon Battle Revolution APWorld & disc-riider-py](https://github.com/Axcel-Snowpix/PokemonRevoAP/releases/latest)
 - [Dolphin Emulator](https://dolphin-emu.org/download)
 - Pokémon Battle Revolution USA ISO ROM

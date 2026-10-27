@@ -1,11 +1,16 @@
 import asyncio
 import traceback
+import json
+import time
+import random
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import dolphin_memory_engine
 
 import Patch
 import Utils
+from worlds.AutoWorld import AutoWorldRegister
 from CommonClient import get_base_parser, gui_enabled, logger, server_loop
 
 tracker_loaded = False
@@ -24,6 +29,7 @@ if TYPE_CHECKING:
 
 from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME
 from .locations import LOCATION_TABLE
+from .data.gen4_pokemon_structure import decode_text
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -116,6 +122,35 @@ class PBRCommandProcessor(SuperCommandProcessor):
         if isinstance(self.ctx, PBRContext):
             logger.info(f"Dolphin Status: {self.ctx.dolphin_status}")
 
+    def _cmd_death_link(self) -> None:
+        """
+        Turn Death Link on or off.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is not None:
+                if "DeathLink" in self.ctx.tags:
+                    Utils.async_start(self.ctx.update_death_link(False))
+                    logger.info("Death Link disabled.")
+                else:
+                    Utils.async_start(self.ctx.update_death_link(True))
+                    logger.info("Death Link enabled.")
+            else:
+                logger.info("Please connect to a multiworld first.")
+
+    def _cmd_death_link_mode(self) -> None:
+        """
+        Change the Death Link Mode between Battle Loss and Pokémon Faint.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is not None:
+                if self.ctx.death_link_mode == 0:
+                    self.ctx.death_link_mode = 1
+                    logger.info("Set Death Link Mode to Pokémon Faint")
+                else:
+                    self.ctx.death_link_mode = 0
+                    logger.info("Set Death Link Mode to Battle Loss")
+            else:
+                logger.info("Please connect to a multiworld first.")
 
 class PBRContext(SuperContext):
     """
@@ -145,6 +180,7 @@ class PBRContext(SuperContext):
         self.awaiting_rom: bool = False
         self.slot_data = {}
         self.has_send_death: bool = False
+        self.death_link_mode: int = 0
 
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         """
@@ -185,7 +221,16 @@ class PBRContext(SuperContext):
             if "death_link" in args["slot_data"]:
                 Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             self.slot_data = args["slot_data"]
+            self.death_link_mode = self.slot_data["death_link_mode"]
 
+    def on_deathlink(self, data: dict[str, Any]) -> None:
+        """
+        Handle a DeathLink event.
+    
+        :param data: The data associated with the DeathLink event.
+        """
+        super().on_deathlink(data)
+        _give_death(self)
 
     def make_gui(self) -> type["kvui.GameManager"]:
         """
@@ -210,7 +255,7 @@ def read_short(console_address: int) -> int:
 
 def read_word(console_address: int) -> int:
     """
-    Read 4-bytes from Dolphin memory.
+    Read a 4-byte word from Dolphin memory.
 
     :param console_address: Address to read from.
     :return: The value read from memory.
@@ -228,6 +273,16 @@ def write_short(console_address: int, value: int) -> None:
     dolphin_memory_engine.write_bytes(console_address, value.to_bytes(2, byteorder="big"))
 
 
+def write_word(console_address: int, value: int) -> None:
+    """
+    Write a 4-byte word to Dolphin memory.
+
+    :param console_address: Address to write to.
+    :param value: Value to write.
+    """
+    dolphin_memory_engine.write_bytes(console_address, value.to_bytes(4, byteorder="big"))
+
+
 def read_string(console_address: int, strlen: int) -> str:
     """
     Read a string from Dolphin memory.
@@ -237,6 +292,55 @@ def read_string(console_address: int, strlen: int) -> str:
     :return: The string.
     """
     return dolphin_memory_engine.read_bytes(console_address, strlen).split(b"\0", 1)[0].decode()
+
+
+def _give_death(ctx: PBRContext) -> None:
+    """
+    Trigger a death in-game.
+
+    :param ctx: The Pokémon Battle Revolution client context
+    """
+    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    if (
+        ctx.slot is not None
+        and dolphin_memory_engine.is_hooked()
+        and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
+        and check_correct_save(ctx)
+        and read_word(0x806288C4) != 0
+        and pointer_addr != 0
+    ):
+        field_data_addr = read_word(pointer_addr + 0x30)
+        if ctx.death_link_mode == 0:
+            battle_outcome_addr = pointer_addr + 0x23e4
+            battle_outcome_value = dolphin_memory_engine.read_byte(battle_outcome_addr)
+            ctx.has_send_death = True
+            dolphin_memory_engine.write_byte(battle_outcome_addr, (battle_outcome_value & 0xfe) | 0x2)
+            write_word(field_data_addr + 0x8, 0x2b)
+        else:
+            # Check if player is in a Single Battle or Double Battle.
+            battle_style = (read_word(read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c) + 0x2c) >> 1) & 1
+            party_data_addr = read_word(read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c) + 0x68)
+            ctx.has_send_death = True
+            if battle_style == 0:
+                pkmn_field_idx = 0
+            else:
+                pkmn_field_idx = random.randint(0,1) * 2
+            pkmn_party_idx = dolphin_memory_engine.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
+            pkmn_party_hp_addr = party_data_addr + pkmn_party_idx * 0xa4 + 0x8 + 0x8e
+            pkmn_offset = 0xc0 * pkmn_field_idx
+            # Set Pokémon's HP to 0
+            write_word(field_data_addr + 0x2d8c + pkmn_offset, 0x0)
+            write_short(pkmn_party_hp_addr, 0x0)
+            # Set Pokémon's Moves to Splash (Prevents them from doing anything this turn)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x4, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x6, 0x96)
+            # Set Pokémon's Moves' PP to 1 (Prevents them from using Struggle instead of Splash)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
 
 
 def find_save_file_address():
@@ -393,6 +497,75 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             if badge_hunt_req and colosseum_clear_req:
                 write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | 0x2000)
 
+
+async def check_death(ctx: PBRContext) -> None:
+    """
+    Check for if a Death Link should be sent.
+    """
+    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    if (
+        ctx.slot is not None
+        and check_correct_save(ctx)
+        and read_word(0x806288C4) != 0
+        and pointer_addr != 0
+    ):
+        battle_data_addr = read_word(pointer_addr + 0x30)
+        battle_lost = bool(
+            (dolphin_memory_engine.read_byte(pointer_addr + 0x23e4) >> 1) & 0x1
+        )
+        party_data_addr = read_word(pointer_addr + 0x68)
+        party_size = read_word(party_data_addr + 0x4)
+        pokemon_alive = 0
+        for i in range(party_size):
+            pokemon_data_addr = party_data_addr + i * 0xa4 + 0x8
+            pokemon_hp = read_short(pokemon_data_addr + 0x8e)
+            if pokemon_hp > 0x0:
+                pokemon_alive += 1
+        if battle_lost and pokemon_alive > 0 and not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
+            ctx.has_send_death = True
+            await ctx.send_death(ctx.player_names[ctx.slot] + " gave up on the battle!")
+        if ctx.death_link_mode == 0:
+            if battle_lost and pokemon_alive <= 0 and not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
+                ctx.has_send_death = True
+                await ctx.send_death(ctx.player_names[ctx.slot] + " lost the battle!")
+            elif not battle_lost and read_word(battle_data_addr + 0x8) != 0x2b:
+                ctx.has_send_death = False
+        else:
+            # Check if player is in a Single Battle or Double Battle.
+            battle_style = (read_word(pointer_addr + 0x2c) >> 1) & 1
+            check_pokemon_1 = True
+            check_pokemon_2 = True
+            pokemon_1_hp = read_word(battle_data_addr + 0x2d8c)
+            pokemon_1_name = dolphin_memory_engine.read_bytes(battle_data_addr + 0x2d76, 22)
+            pokemon_1_name = decode_text(pokemon_1_name, 11)
+            if battle_style == 1:
+                pokemon_2_hp = read_word(battle_data_addr + 0x2d8c + 0x180)
+                pokemon_2_name = dolphin_memory_engine.read_bytes(battle_data_addr + 0x2d76 + 0x180, 22)
+                pokemon_2_name = decode_text(pokemon_2_name, 11)
+                # Stop checking a slot's HP if there is no Pokémon there. (Player only has 1 Pokémon left.)
+                if pokemon_alive == 1:
+                    if pokemon_1_hp <= 0:
+                        check_pokemon_1 = False
+                    else:
+                        check_pokemon_2 = False
+                if pokemon_2_hp <= 0 and check_pokemon_2:
+                    if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
+                        ctx.has_send_death = True
+                        await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_2_name} fainted!")
+                elif (
+                    (pokemon_1_hp > 0 or not check_pokemon_1)
+                    and not battle_lost
+                    and read_word(battle_data_addr + 0x8) != 0x2b
+                ):
+                    ctx.has_send_death = False
+            if pokemon_1_hp <= 0 and check_pokemon_1:
+                if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
+                    ctx.has_send_death = True
+                    await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_1_name} fainted!")
+            elif battle_style == 0 and not battle_lost and read_word(battle_data_addr + 0x8) != 0x2b:
+                ctx.has_send_death = False
+
+
 def check_correct_save(ctx: PBRContext) -> bool:
     """
     Check if the currently loaded save file is the correct one for the current multiworld.
@@ -456,6 +629,8 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     continue
                 if ctx.slot is not None:
                     if check_correct_save(ctx):
+                        if "DeathLink" in ctx.tags:
+                            await check_death(ctx)
                         await give_items(ctx)
                         await check_locations(ctx)
                         await check_stargazer_unlock(ctx)
@@ -530,6 +705,23 @@ def main(*args: str) -> None:
             ctx.run_gui()
         ctx.run_cli()
         await asyncio.sleep(1)
+
+        worlds_paths = [
+            Path(Utils.local_path("worlds")),
+            Path(Utils.local_path("custom_worlds")),
+            Path(Utils.home_path("worlds")),
+            Path(Utils.home_path("custom_worlds")),
+        ]
+        world_type = AutoWorldRegister.world_types["Pokémon Battle Revolution"]
+        world_type_path = Path(world_type.__file__)
+        for worlds_path in worlds_paths:
+            if world_type_path.is_relative_to(worlds_path):
+                world_root = worlds_path / world_type_path.relative_to(worlds_path).parents[0]
+                manifest_path = world_root / "archipelago.json"
+                break
+        with manifest_path.open("r", encoding="utf-8") as file:
+            manifest = json.load(file)
+        logger.info(f"Pokémon Battle Revolution APWorld Version: {manifest["world_version"]}")
 
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")
 

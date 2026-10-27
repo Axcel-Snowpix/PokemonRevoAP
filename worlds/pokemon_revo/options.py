@@ -1,6 +1,32 @@
 from dataclasses import dataclass
 
-from Options import Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle, NamedRange, OptionSet
+from Options import (
+    Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle,
+    NamedRange, OptionSet, DeathLink as DeathLinkBase,
+)
+
+class DeathLink(DeathLinkBase):
+    """
+    When you die, everyone who enabled death link dies. Of course, the reverse is true too.
+
+    This can be changed mid-game by using the /death_link command in the client.
+    """
+
+class DeathLinkMode(Choice):
+    """
+    Determines how death links will be sent and received.
+
+    Battle Loss: Death links will be sent when you lose a battle, 
+    and will cause you to instantly lose the current battle when received.
+    Pokémon Faint: Death links will be sent when one of your Pokémon faint,
+    and will cause one of the Pokémon you have out in battle to faint when received
+
+    This can be changed mid-game by using the /death_link_mode command in the client.
+    """
+    display_name = "Death Link Mode"
+    option_battle_loss = 0
+    option_pokemon_faint = 1
+    default = 0
 
 class GoalUnlockMethod(Choice):
     """
@@ -113,6 +139,8 @@ class Battlesanity(Toggle):
 
 @dataclass
 class PBROptions(PerGameCommonOptions):
+    death_link: DeathLink
+    death_link_mode: DeathLinkMode
     goal_unlock_method: GoalUnlockMethod
     required_badge_amount: RequiredBadgeAmount
     total_badge_amount: TotalBadgeAmount

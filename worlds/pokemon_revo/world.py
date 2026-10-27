@@ -94,6 +94,8 @@ class PBRWorld(World):
 
     def fill_slot_data(self) -> Mapping[str, Any]:
         return self.options.as_dict(
+            "death_link",
+            "death_link_mode",
             "goal_unlock_method",
             "required_badge_amount",
             "colosseum_clear_count",

@@ -1,3 +1,4 @@
+
 Bit flag table is in common 0017.bin
 
 FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
@@ -185,7 +186,7 @@ When saving new HP value, r5 tracks the Pokémon's index number
 
 Switch Pokémon: 0x803bda0c
 
-FUN_8023f9b4 may be retire option?
+Save Pokémon HP from Battle Data to Party Data: 0x803dec14
 
 
 Fresh Save File Documentation

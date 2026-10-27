@@ -37,7 +37,7 @@ PBR_ENCODING: defaultdict[str, int] = defaultdict(lambda: 0x00E0, {
     **{katakana: 0x0052 + i for i, katakana in enumerate("ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデト")},
     **{katakana: 0x007A + i for i, katakana in enumerate("ドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロワヲン")},
     **{fullwidth_num: 0x00A2 + i for i, fullwidth_num in enumerate("０１２３４５６７８９")},
-    **{fullwidth_capital: 0x00AC + i for i, fullwidth_capital in enumerate("ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ")}
+    **{fullwidth_capital: 0x00AC + i for i, fullwidth_capital in enumerate("ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ")},
     **{fullwidth_lowercase: 0x00C6 + i for i, fullwidth_lowercase in enumerate("ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ")},
     **{fullwidth_symbol: 0x00E1 + i for i, fullwidth_symbol in enumerate("！？、。…・／「」『』（）♂♀-＋ー×÷＝～：；．，")},
     **{fullwidth_symbol: 0x00FA + i for i, fullwidth_symbol in enumerate("♠♣♥♦★◎○□△◇＠♪％☀☁☂☃")},
@@ -241,13 +241,7 @@ class Gen4Pokemon:
 
     def parse_c_block(self, data: bytes) -> None:
         nickname_bytes = data[:0x16]
-        nickname = ""
-        for i in range(11):
-            char = int.from_bytes(nickname_bytes[(i*2):(i*2)+2], byteorder="big")
-            if char == 0xFFFF or char == 0x00:
-                break
-            nickname += PBR_ENCODING_INVERSE[char]
-        self.nickname = nickname
+        self.nickname = decode_text(nickname_bytes, 11)
         self.unusedC1 = data[0x16]
         self.game_of_origin = data[0x17]
         self.sinnoh_ribbons_2 = int.from_bytes(data[0x18:0x1C], byteorder="big")
@@ -269,13 +263,7 @@ class Gen4Pokemon:
 
     def parse_d_block(self, data: bytes) -> None:
         trainer_bytes = data[:0x10]
-        trainer = ""
-        for i in range(8):
-            char = int.from_bytes(trainer_bytes[(i*2):(i*2)+2], byteorder="big")
-            if char == 0xFFFF or char == 0x0000:
-                break
-            trainer += PBR_ENCODING_INVERSE[char]
-        self.trainer_name = trainer
+        self.trainer_name = decode_text(trainer_bytes, 8)
         self.egg_date_1 = data[0x10]
         self.egg_date_2 = data[0x11]
         self.egg_date_3 = data[0x12]
@@ -366,3 +354,12 @@ class Gen4Pokemon:
 
     def __repr__(self):
         return f"{self.nickname}: Species {self.species}"
+
+def decode_text(text: bytes, text_length: int) -> str:
+    decoded_text = ""
+    for i in range(text_length):
+        char = int.from_bytes(text[(i*2):(i*2)+2], byteorder="big")
+        if char == 0xFFFF or char == 0x00:
+            break
+        decoded_text += PBR_ENCODING_INVERSE[char]
+    return decoded_text

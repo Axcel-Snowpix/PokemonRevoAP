@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME
 from .locations import LOCATION_TABLE
-from .data.gen4_pokemon_structure import decode_text
+from .data.gen4_pokemon_structure import Gen4Pokemon, decode_text
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -128,7 +128,7 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if "DeathLink" in self.ctx.tags:
+                if f"DeathLink{self.ctx.death_link_group}" in self.ctx.tags:
                     Utils.async_start(self.ctx.update_death_link(False))
                     logger.info("Death Link disabled.")
                 else:
@@ -152,6 +152,51 @@ class PBRCommandProcessor(SuperCommandProcessor):
             else:
                 logger.info("Please connect to a multiworld first.")
 
+    def _cmd_death_link_group(self, group: Optional[str]) -> None:
+        """
+        Change the current Death Link Group.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is not None:
+                if group == None:
+                    Utils.async_start(self.ctx.update_death_link_group(""))
+                    logger.info(f'Set Death Link Group to Empty')
+                else:
+                    Utils.async_start(self.ctx.update_death_link_group(group))
+                    logger.info(f'Set Death Link Group to "{group}"')
+            else:
+                logger.info("Please connect to a multiworld first.")
+
+    def _cmd_damage_link(self) -> None:
+        """
+        Turn Damage Link on or off.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is not None:
+                if f"SharedDamage{self.ctx.damage_link_group}" in self.ctx.tags:
+                    Utils.async_start(self.ctx.update_damage_link(False))
+                    logger.info("Damage Link disabled.")
+                else:
+                    Utils.async_start(self.ctx.update_damage_link(True))
+                    logger.info("Damage Link enabled.")
+            else:
+                logger.info("Please connect to a multiworld first.")
+
+    def _cmd_damage_link_group(self, group: Optional[str]) -> None:
+        """
+        Change the current Damage Link Group.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is not None:
+                if group == None:
+                    Utils.async_start(self.ctx.update_damage_link_group(""))
+                    logger.info(f'Set Damage Link Group to Empty')
+                else:
+                    Utils.async_start(self.ctx.update_damage_link_group(group))
+                    logger.info(f'Set Damage Link Group to "{group}"')
+            else:
+                logger.info("Please connect to a multiworld first.")
+
 class PBRContext(SuperContext):
     """
     The context for Pokémon Battle Revolution client.
@@ -164,7 +209,10 @@ class PBRContext(SuperContext):
     tags = {"AP"}
     items_handling: int = 0b111
     slot_data = dict[str, Any]
-    colosseums_cleared = []
+    colosseums_cleared: list = []
+    has_got_pkmn_dmg_data: bool = False
+    dmglink_pkmn_idx: int = 0
+    pkmn_hp: list = []
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         """
@@ -181,6 +229,10 @@ class PBRContext(SuperContext):
         self.slot_data = {}
         self.has_send_death: bool = False
         self.death_link_mode: int = 0
+        self.death_link_group: str = ""
+        self.can_send_damagelink: bool = True
+        self.damage_link_group: str = ""
+        self.last_damage_link: float = time.time()
 
     async def disconnect(self, allow_autoreconnect: bool = False) -> None:
         """
@@ -218,10 +270,18 @@ class PBRContext(SuperContext):
         """
         super().on_package(cmd, args)
         if cmd == "Connected":
-            if "death_link" in args["slot_data"]:
-                Utils.async_start(self.update_death_link(bool(args["slot_data"]["death_link"])))
             self.slot_data = args["slot_data"]
+            Utils.async_start(self.update_death_link_group(self.slot_data["death_link_group"]))
+            Utils.async_start(self.update_damage_link_group(self.slot_data["damage_link_group"]))
+            Utils.async_start(self.update_death_link(bool(self.slot_data["death_link"])))
+            Utils.async_start(self.update_damage_link(bool(self.slot_data["damage_link"])))
             self.death_link_mode = self.slot_data["death_link_mode"]
+        elif cmd == "Bounced":
+            tags = args.get("tags", [])
+            if f"DeathLink{self.death_link_group}" in tags and self.last_death_link != args["data"]["time"]:
+                self.on_deathlink(args["data"])
+            if f"SharedDamage{self.damage_link_group}" in tags and self.last_damage_link != args["data"]["time"]:
+                self.on_damagelink(args["data"])
 
     def on_deathlink(self, data: dict[str, Any]) -> None:
         """
@@ -231,6 +291,93 @@ class PBRContext(SuperContext):
         """
         super().on_deathlink(data)
         _give_death(self)
+
+    def on_damagelink(self, data: dict[str, Any]) -> None:
+        """
+        Handle a DamageLink event.
+
+        :param data: The data associated with the DamageLink event.
+        """
+        self.last_damage_link = max(data["time"], self.last_damage_link)
+        damage = data.get("damage_points", 0)
+        text = data.get("cause", "")
+        if text:
+            logger.info(f"DamageLink: {text}")
+        else:
+            logger.info(f"DamageLink: Received {damage} damage from {data['source']}")
+        _give_damage(self, damage)
+
+    async def send_death(self, death_text: str = ""):
+        """Helper function to send a deathlink using death_text as the unique death cause string."""
+        if self.server and self.server.socket:
+            logger.info("DeathLink: Sending death to your friends...")
+            self.last_death_link = time.time()
+            await self.send_msgs([{
+                "cmd": "Bounce", "tags": [f"DeathLink{self.death_link_group}"],
+                "data": {
+                    "time": self.last_death_link,
+                    "source": self.player_names[self.slot],
+                    "cause": death_text
+                }
+            }])
+
+    async def send_damage(self, damage: int, damage_text: str = ""):
+        """Helper function to send a damagelink using damage_text as the unique damage cause string."""
+        if self.server and self.server.socket:
+            logger.info(f"DamageLink: Sending {damage} damage")
+            self.last_damage_link = time.time()
+            await self.send_msgs([{
+                "cmd": "Bounce", "tags": [f"SharedDamage{self.damage_link_group}"],
+                "data": {
+                "time": time.time(),
+                "uuid": Utils.get_unique_identifier(),
+                "source": self.player_names[self.slot],
+                "damage_points": damage,
+                "cause": damage_text
+                },
+            }])
+
+    async def update_death_link(self, death_link: bool):
+        """Helper function to set Death Link connection tag on/off and update the connection if already connected."""
+        old_tags = self.tags.copy()
+        if death_link:
+            self.tags.add(f"DeathLink{self.death_link_group}")
+        else:
+            self.tags -= {f"DeathLink{self.death_link_group}"}
+        if old_tags != self.tags and self.server and not self.server.socket.closed:
+            await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
+
+    async def update_death_link_group(self, group_name: str):
+        """Helper function to change the Death Link group, updating the connection tag as needed if already connected."""
+        death_link: bool = f"DeathLink{self.death_link_group}" in self.tags
+        if death_link:
+            self.tags -= {f"DeathLink{self.death_link_group}"}
+        self.death_link_group = group_name
+        if death_link:
+            self.tags.add(f"DeathLink{self.death_link_group}")
+            if self.server and not self.server.socket.closed:
+                await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
+
+    async def update_damage_link(self, damage_link: bool):
+        """Helper function to set Damage Link connection tag on/off and update the connection if already connected."""
+        old_tags = self.tags.copy()
+        if damage_link:
+            self.tags.add(f"SharedDamage{self.damage_link_group}")
+        else:
+            self.tags -= {f"SharedDamage{self.damage_link_group}"}
+        if old_tags != self.tags and self.server and not self.server.socket.closed:
+            await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
+    
+    async def update_damage_link_group(self, group_name: str):
+        """Helper function to change the Damage Link group, updating the connection tag as needed if already connected."""
+        damage_link: bool = f"SharedDamage{self.damage_link_group}" in self.tags
+        if damage_link:
+            self.tags -= {f"SharedDamage{self.damage_link_group}"}
+        self.damage_link_group = group_name
+        if damage_link:
+            self.tags.add(f"SharedDamage{self.damage_link_group}")
+            if self.server and not self.server.socket.closed:
+                await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
     def make_gui(self) -> type["kvui.GameManager"]:
         """
@@ -318,13 +465,18 @@ def _give_death(ctx: PBRContext) -> None:
             write_word(field_data_addr + 0x8, 0x2b)
         else:
             # Check if player is in a Single Battle or Double Battle.
-            battle_style = (read_word(read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c) + 0x2c) >> 1) & 1
-            party_data_addr = read_word(read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c) + 0x68)
+            battle_style = (read_word(read_word(pointer_addr + 0x2c) >> 1)) & 1
+            party_data_addr = read_word(pointer_addr + 0x68)
             ctx.has_send_death = True
             if battle_style == 0:
                 pkmn_field_idx = 0
             else:
                 pkmn_field_idx = random.randint(0,1) * 2
+                pkmn_hp = read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
+                if pkmn_hp <= 0 and pkmn_field_idx == 0:
+                    pkmn_field_idx = 2
+                elif pkmn_hp <= 0 and pkmn_field_idx == 2:
+                    pkmn_field_idx = 0
             pkmn_party_idx = dolphin_memory_engine.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
             pkmn_party_hp_addr = party_data_addr + pkmn_party_idx * 0xa4 + 0x8 + 0x8e
             pkmn_offset = 0xc0 * pkmn_field_idx
@@ -341,6 +493,63 @@ def _give_death(ctx: PBRContext) -> None:
             dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
             dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
             dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
+
+
+def _give_damage(ctx: PBRContext, damage: int) -> None:
+    """
+    Damage the Player's Pokémon
+
+    :param damage: The amount of damage to deal.
+    """
+    damage = int(damage)
+    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    if (
+        ctx.slot is not None
+        and dolphin_memory_engine.is_hooked()
+        and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
+        and check_correct_save(ctx)
+        and read_word(0x806288C4) != 0
+        and pointer_addr != 0
+    ):
+        field_data_addr = read_word(pointer_addr + 0x30)
+        # Check if player is in a Single Battle or Double Battle.
+        battle_style = (read_word(pointer_addr + 0x2c) >> 1) & 1
+        party_data_addr = read_word(pointer_addr + 0x68)
+        ctx.can_send_damagelink = False
+        if battle_style == 0:
+            pkmn_field_idx = 0
+        else:
+            pkmn_field_idx = random.randint(0,1) * 2
+            pkmn_hp = read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
+            if pkmn_hp <= 0 and pkmn_field_idx == 0:
+                pkmn_field_idx = 2
+            elif pkmn_hp <= 0 and pkmn_field_idx == 2:
+                pkmn_field_idx = 0
+        pkmn_party_idx = dolphin_memory_engine.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
+        pkmn_party_hp_addr = party_data_addr + pkmn_party_idx * 0xa4 + 0x8 + 0x8e
+        pkmn_offset = 0xc0 * pkmn_field_idx
+        # Deal the damage.
+        pkmn_hp = read_word(field_data_addr + 0x2d8c + pkmn_offset)
+        pkmn_hp = max(pkmn_hp - damage, 0)
+        write_word(field_data_addr + 0x2d8c + pkmn_offset, pkmn_hp)
+        write_short(pkmn_party_hp_addr, pkmn_hp)
+        if pkmn_hp <= 0:
+            # Set Pokémon's Moves to Splash if they'll faint (Prevents them from doing anything this turn)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x4, 0x96)
+            write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x6, 0x96)
+            # Set Pokémon's Moves' PP to 1 if they'll faint (Prevents them from using Struggle instead of Splash)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
+            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
+        if battle_style == 1:
+            pkmn_name = dolphin_memory_engine.read_bytes(field_data_addr + pkmn_offset + 0x2d76, 22)
+            pkmn_name = decode_text(pkmn_name, 11)
+            logger.info(f"{pkmn_name} took the damage!")
+        ctx.pkmn_hp[pkmn_party_idx] = pkmn_hp
+        ctx.can_send_damagelink = True
 
 
 def find_save_file_address():
@@ -504,12 +713,11 @@ async def check_death(ctx: PBRContext) -> None:
     """
     pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
     if (
-        ctx.slot is not None
-        and check_correct_save(ctx)
+        check_correct_save(ctx)
         and read_word(0x806288C4) != 0
         and pointer_addr != 0
     ):
-        battle_data_addr = read_word(pointer_addr + 0x30)
+        field_data_addr = read_word(pointer_addr + 0x30)
         battle_lost = bool(
             (dolphin_memory_engine.read_byte(pointer_addr + 0x23e4) >> 1) & 0x1
         )
@@ -528,19 +736,19 @@ async def check_death(ctx: PBRContext) -> None:
             if battle_lost and pokemon_alive <= 0 and not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
                 ctx.has_send_death = True
                 await ctx.send_death(ctx.player_names[ctx.slot] + " lost the battle!")
-            elif not battle_lost and read_word(battle_data_addr + 0x8) != 0x2b:
+            elif not battle_lost and read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
         else:
             # Check if player is in a Single Battle or Double Battle.
             battle_style = (read_word(pointer_addr + 0x2c) >> 1) & 1
             check_pokemon_1 = True
             check_pokemon_2 = True
-            pokemon_1_hp = read_word(battle_data_addr + 0x2d8c)
-            pokemon_1_name = dolphin_memory_engine.read_bytes(battle_data_addr + 0x2d76, 22)
+            pokemon_1_hp = read_word(field_data_addr + 0x2d8c)
+            pokemon_1_name = dolphin_memory_engine.read_bytes(field_data_addr + 0x2d76, 22)
             pokemon_1_name = decode_text(pokemon_1_name, 11)
             if battle_style == 1:
-                pokemon_2_hp = read_word(battle_data_addr + 0x2d8c + 0x180)
-                pokemon_2_name = dolphin_memory_engine.read_bytes(battle_data_addr + 0x2d76 + 0x180, 22)
+                pokemon_2_hp = read_word(field_data_addr + 0x2d8c + 0x180)
+                pokemon_2_name = dolphin_memory_engine.read_bytes(field_data_addr + 0x2d76 + 0x180, 22)
                 pokemon_2_name = decode_text(pokemon_2_name, 11)
                 # Stop checking a slot's HP if there is no Pokémon there. (Player only has 1 Pokémon left.)
                 if pokemon_alive == 1:
@@ -555,15 +763,51 @@ async def check_death(ctx: PBRContext) -> None:
                 elif (
                     (pokemon_1_hp > 0 or not check_pokemon_1)
                     and not battle_lost
-                    and read_word(battle_data_addr + 0x8) != 0x2b
+                    and read_word(field_data_addr + 0x8) != 0x2b
                 ):
                     ctx.has_send_death = False
             if pokemon_1_hp <= 0 and check_pokemon_1:
                 if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
                     ctx.has_send_death = True
                     await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_1_name} fainted!")
-            elif battle_style == 0 and not battle_lost and read_word(battle_data_addr + 0x8) != 0x2b:
+            elif battle_style == 0 and not battle_lost and read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
+
+
+async def check_damage(ctx: PBRContext) -> None:
+    """
+    Check for if Damage Links should be sent, and how much damage to send.
+    """
+    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    if (
+        check_correct_save(ctx)
+        and read_word(0x806288C4) != 0
+        and pointer_addr != 0
+    ):
+        if ctx.can_send_damagelink and time.time() >= ctx.last_damage_link + 0.5:
+            party_data_addr = read_word(pointer_addr + 0x68)
+            party_size = read_word(party_data_addr + 0x4)
+            if ctx.has_got_pkmn_dmg_data:
+                damage = 0
+                pokemon_data_addr = party_data_addr + ctx.dmglink_pkmn_idx * 0xa4 + 0x8
+                new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
+                damage = max(ctx.pkmn_hp[ctx.dmglink_pkmn_idx] - new_pkmn_hp, 0)
+                if damage > 0:
+                    pkmn = Gen4Pokemon.create_from_binary(dolphin_memory_engine.read_bytes(pokemon_data_addr, PKMM_SIZE))
+                    await ctx.send_damage(damage, f"{ctx.player_names[ctx.slot]}'s {pkmn.nickname} took {damage} damage!")
+                ctx.pkmn_hp[ctx.dmglink_pkmn_idx] = new_pkmn_hp
+                ctx.dmglink_pkmn_idx += 1
+                if ctx.dmglink_pkmn_idx >= party_size:
+                    ctx.dmglink_pkmn_idx = 0
+            else:
+                ctx.has_got_pkmn_dmg_data = True
+                for i in range(0,party_size):
+                    pokemon_data_addr = party_data_addr + i * 0xa4 + 0x8
+                    ctx.pkmn_hp.append(read_short(pokemon_data_addr + 0x8e))
+                ctx.dmglink_pkmn_idx = 0
+    else:
+        ctx.has_got_pkmn_dmg_data = False
+        ctx.pkmn_hp.clear()
 
 
 def check_correct_save(ctx: PBRContext) -> bool:
@@ -629,8 +873,10 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     continue
                 if ctx.slot is not None:
                     if check_correct_save(ctx):
-                        if "DeathLink" in ctx.tags:
+                        if f"DeathLink{ctx.death_link_group}" in ctx.tags:
                             await check_death(ctx)
+                        if f"SharedDamage{ctx.damage_link_group}" in ctx.tags:
+                            await check_damage(ctx)
                         await give_items(ctx)
                         await check_locations(ctx)
                         await check_stargazer_unlock(ctx)

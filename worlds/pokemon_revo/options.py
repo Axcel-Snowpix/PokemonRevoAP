@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from Options import (
     Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle,
-    NamedRange, OptionSet, DeathLink as DeathLinkBase,
+    NamedRange, OptionSet, FreeText, DeathLink as DeathLinkBase,
 )
 
 class DeathLink(DeathLinkBase):
@@ -19,7 +19,7 @@ class DeathLinkMode(Choice):
     Battle Loss: Death links will be sent when you lose a battle, 
     and will cause you to instantly lose the current battle when received.
     Pokémon Faint: Death links will be sent when one of your Pokémon faint,
-    and will cause one of the Pokémon you have out in battle to faint when received
+    and will cause one of the Pokémon you have out in battle to faint when received.
 
     This can be changed mid-game by using the /death_link_mode command in the client.
     """
@@ -27,6 +27,33 @@ class DeathLinkMode(Choice):
     option_battle_loss = 0
     option_pokemon_faint = 1
     default = 0
+
+class DeathLinkGroup(FreeText):
+    """
+    Death Link only applies to players with an identical Group name.
+    Games that don't support the Group option count as having an empty group name.
+
+    This can be changed mid-game by using the /death_link_group command in the client.
+    """
+    display_name = "Death Link Group"
+
+class DamageLink(Toggle):
+    """
+    Damage is shared across slots.
+
+    This can be changed mid-game by using the /damage_link command in the client.
+    """
+    display_name = "Damage Link"
+
+class DamageLinkGroup(FreeText):
+    """
+    Damage Link only applies to players with an identical Group name.
+    Games that don't support the Group option count as having an empty group name.
+
+    This can be changed mid-game by using the /damage_link_group command in the client.
+    """
+    display_name = "Damage Link Group"
+    rich_text_doc = True
 
 class GoalUnlockMethod(Choice):
     """
@@ -141,6 +168,9 @@ class Battlesanity(Toggle):
 class PBROptions(PerGameCommonOptions):
     death_link: DeathLink
     death_link_mode: DeathLinkMode
+    death_link_group: DeathLinkGroup
+    damage_link: DamageLink
+    damage_link_group: DamageLinkGroup
     goal_unlock_method: GoalUnlockMethod
     required_badge_amount: RequiredBadgeAmount
     total_badge_amount: TotalBadgeAmount

@@ -96,6 +96,9 @@ class PBRWorld(World):
         return self.options.as_dict(
             "death_link",
             "death_link_mode",
+            "death_link_group",
+            "damage_link",
+            "damage_link_group",
             "goal_unlock_method",
             "required_badge_amount",
             "colosseum_clear_count",

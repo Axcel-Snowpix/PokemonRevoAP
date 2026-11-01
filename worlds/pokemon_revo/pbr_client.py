@@ -587,7 +587,7 @@ async def give_death(ctx: PBRContext) -> None:
             dme.write_word(field_data_addr + 0x2d8c + pkmn_offset, 0x0)
             write_short(pkmn_party_data + 0x8e, 0x0)
             if battle_style == 1:
-                logger.info(f"{Gen4Pokemon.create_from_binary(pkmn).nickname} fainted!")
+                logger.info(f"DeathLink: {Gen4Pokemon.create_from_binary(pkmn).nickname} fainted!")
             # Set Pokémon's Moves to Splash (Prevents them from doing anything this turn)
             write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
@@ -677,7 +677,7 @@ async def give_damage(ctx: PBRContext) -> None:
         if battle_style == 1:
             pkmn_name = dme.read_bytes(field_data_addr + pkmn_offset + 0x2d76, 22)
             pkmn_name = decode_text(pkmn_name, 11)
-            logger.info(f"{pkmn_name} took {damage} damage!")
+            logger.info(f"DamageLink: {pkmn_name} took {damage} damage!")
         if pkmn_hp <= 0:
             pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
             pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)

@@ -1,4 +1,3 @@
-
 Bit flag table is in common 0017.bin
 
 FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
@@ -42,6 +41,8 @@ InitSaveSlotFlags = Gateway and Main Street Unlock
 80139fe4 = Sunset Unlock
 8013a054 = Courtyard Unlock
 8013a0a4 = Stargazer Unlock
+
+Post Game Unlock: 8011584c
 
 
 FUN_800e7f24 sets various flags for Battle Passes
@@ -144,7 +145,7 @@ From 8044fa90, at an offset of 0x28, is a variable that is used to know what to 
 This value is set by FUN_800746d8 at 800746fc and is based on the paramater.
 This function is called at 80031a14 to set the flag when the player wins or loses, which is in turn called by FUN_80230d38 at 80231a94 through a branch to CTR, which in turn gets called by FUN_80230044 at 80230a08
 The value is pulled from 80c42a40 at an offset of 0xC
-Field 0x585EC of the save slot at an offset of 0x10 contains the ID for the current Colosseum
+Field 0x585EC of the save slot at an offset of 0x10 contains the ID for the current Colosseum, and at an offset of 0x16, it contains a halfword with the current battle number.
 
 Colosseum IDs at field 0x585EC[0x10]:
 0x3E8 = Gateway Colosseum

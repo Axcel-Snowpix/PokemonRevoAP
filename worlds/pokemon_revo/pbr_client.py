@@ -6,7 +6,7 @@ import random
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-import dolphin_memory_engine
+import dolphin_memory_engine as dme
 
 import Patch
 import Utils
@@ -35,13 +35,16 @@ CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
 )
 CONNECTION_REFUSED_SAVE_STATUS = (
-    "Dolphin failed to connect. Please load into a save file made for this Multiworld. Trying again in 5 seconds..."
+    "Dolphin connected, but the detected save file was not made for this Multiworld. Trying again in 5 seconds..."
 )
 CONNECTION_LOST_STATUS = (
     "Dolphin connection was lost. Please restart your emulator and make sure Pokémon Battle Revolution is running."
 )
 CONNECTION_CONNECTED_STATUS = "Dolphin connected successfully."
 CONNECTION_INITIAL_STATUS = "Dolphin connection has not been initiated."
+CONNECTION_CONNECTED_SAVE_STATUS = (
+    "The save file was identified as properly made for this Multiworld. Connection successful."
+)
 
 # This address contains a pointer to the starting address of the save file in memory.
 SAVE_FILE_FIND_ADDR = 0x8045DE80
@@ -99,6 +102,15 @@ PKMM_SIZE = 0x88
 # Offset for Player's Copied Pokemon Boxes
 PKMN_BOXES_OFFSET = 0x5F8
 
+# Data Storage Keys
+AP_ITEM_QUEUE_KEY = "pbr_battle_item_queue_%i"
+AP_ITEM_QUEUE_IDXS_KEY = "pbr_battle_item_queue_idxs_%i"
+AP_DEATH_LINK_KEY = "pbr_death_link_%i"
+AP_DEATH_LINK_MODE_KEY = "pbr_death_link_mode_%i"
+AP_DEATH_LINK_GROUP_KEY = "pbr_death_link_group_%i"
+AP_DAMAGE_LINK_KEY = "pbr_damage_link_%i"
+AP_DAMAGE_LINK_GROUP_KEY = "pbr_damage_link_group_%i"
+
 
 class PBRCommandProcessor(SuperCommandProcessor):
     """
@@ -128,12 +140,16 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if f"DeathLink{self.ctx.death_link_group}" in self.ctx.tags:
-                    Utils.async_start(self.ctx.update_death_link(False))
-                    logger.info("Death Link disabled.")
-                else:
-                    Utils.async_start(self.ctx.update_death_link(True))
+                setting = not f"DeathLink{self.ctx.death_link_group}" in self.ctx.tags
+                if setting:
                     logger.info("Death Link enabled.")
+                else:
+                    logger.info("Death Link disabled.")
+                key = AP_DEATH_LINK_KEY % self.ctx.slot
+                Utils.async_start(self.ctx.update_death_link(setting))
+                Utils.async_start(
+                    self.ctx.update_server_variable(key, int(setting == 1))
+                )
             else:
                 logger.info("Please connect to a multiworld first.")
 
@@ -143,27 +159,37 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if self.ctx.death_link_mode == 0:
-                    self.ctx.death_link_mode = 1
-                    logger.info("Set Death Link Mode to Pokémon Faint")
+                if not self.ctx.has_send_death:
+                    setting = int(not bool(self.ctx.death_link_mode) == 1)
+                    if setting == 1:
+                        logger.info("Set Death Link Mode to Pokémon Faint")
+                    else:
+                        logger.info("Set Death Link Mode to Battle Loss")
+                    key = AP_DEATH_LINK_MODE_KEY % self.ctx.slot
+                    self.ctx.death_link_mode = setting
+                    Utils.async_start(
+                        self.ctx.update_server_variable(key, setting)
+                    )
                 else:
-                    self.ctx.death_link_mode = 0
-                    logger.info("Set Death Link Mode to Battle Loss")
+                    logger.info("Error: A recently received/sent Death Link is still being processed. Please try again later.")
             else:
-                logger.info("Please connect to a multiworld first.")
+                logger.info("Error: Please connect to a multiworld first.")
 
-    def _cmd_death_link_group(self, group: Optional[str]) -> None:
+    def _cmd_death_link_group(self, group='') -> None:
         """
         Change the current Death Link Group.
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if group == None:
-                    Utils.async_start(self.ctx.update_death_link_group(""))
+                if group == '':
                     logger.info(f'Set Death Link Group to Empty')
                 else:
-                    Utils.async_start(self.ctx.update_death_link_group(group))
                     logger.info(f'Set Death Link Group to "{group}"')
+                key = AP_DEATH_LINK_GROUP_KEY % self.ctx.slot
+                Utils.async_start(self.ctx.update_death_link_group(group))
+                Utils.async_start(
+                    self.ctx.update_server_variable(key, group)
+                )
             else:
                 logger.info("Please connect to a multiworld first.")
 
@@ -173,27 +199,34 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if f"SharedDamage{self.ctx.damage_link_group}" in self.ctx.tags:
-                    Utils.async_start(self.ctx.update_damage_link(False))
-                    logger.info("Damage Link disabled.")
-                else:
-                    Utils.async_start(self.ctx.update_damage_link(True))
+                setting = not f"SharedDamage{self.ctx.damage_link_group}" in self.ctx.tags
+                if setting:
                     logger.info("Damage Link enabled.")
+                else:
+                    logger.info("Damage Link disabled.")
+                key = AP_DAMAGE_LINK_KEY % self.ctx.slot
+                Utils.async_start(self.ctx.update_damage_link(setting))
+                Utils.async_start(
+                    self.ctx.update_server_variable(key, int(setting == 1))
+                )
             else:
                 logger.info("Please connect to a multiworld first.")
 
-    def _cmd_damage_link_group(self, group: Optional[str]) -> None:
+    def _cmd_damage_link_group(self, group='') -> None:
         """
         Change the current Damage Link Group.
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
-                if group == None:
-                    Utils.async_start(self.ctx.update_damage_link_group(""))
+                if group == '':
                     logger.info(f'Set Damage Link Group to Empty')
                 else:
-                    Utils.async_start(self.ctx.update_damage_link_group(group))
                     logger.info(f'Set Damage Link Group to "{group}"')
+                key = AP_DAMAGE_LINK_GROUP_KEY % self.ctx.slot
+                Utils.async_start(self.ctx.update_damage_link_group(group))
+                Utils.async_start(
+                    self.ctx.update_server_variable(key, group)
+                )
             else:
                 logger.info("Please connect to a multiworld first.")
 
@@ -213,6 +246,11 @@ class PBRContext(SuperContext):
     has_got_pkmn_dmg_data: bool = False
     dmglink_pkmn_idx: int = 0
     pkmn_hp: list = []
+    battle_item_queue: list = []
+    battle_item_queue_idxs: list = []
+    trigger_death: bool = False
+    damage_points: int = 0
+    correct_save: bool = False
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         """
@@ -271,11 +309,62 @@ class PBRContext(SuperContext):
         super().on_package(cmd, args)
         if cmd == "Connected":
             self.slot_data = args["slot_data"]
-            Utils.async_start(self.update_death_link_group(self.slot_data["death_link_group"]))
-            Utils.async_start(self.update_damage_link_group(self.slot_data["damage_link_group"]))
-            Utils.async_start(self.update_death_link(bool(self.slot_data["death_link"])))
-            Utils.async_start(self.update_damage_link(bool(self.slot_data["damage_link"])))
-            self.death_link_mode = self.slot_data["death_link_mode"]
+            keys = [
+                AP_ITEM_QUEUE_KEY % self.slot,
+                AP_ITEM_QUEUE_IDXS_KEY % self.slot,
+                AP_DEATH_LINK_GROUP_KEY % self.slot,
+                AP_DEATH_LINK_KEY % self.slot,
+                AP_DEATH_LINK_MODE_KEY % self.slot,
+                AP_DAMAGE_LINK_GROUP_KEY % self.slot,
+                AP_DAMAGE_LINK_KEY % self.slot,
+            ]
+            for key in keys:
+                Utils.async_start(self.send_msgs([{"cmd": "Get", "keys": [key]}]))
+        elif cmd == "Retrieved":
+            requested_keys_dict = args["keys"]
+            if self.slot is not None:
+                keys = {
+                    AP_ITEM_QUEUE_KEY % self.slot: {"slot_data": None},
+                    AP_ITEM_QUEUE_IDXS_KEY % self.slot: {"slot_data": None},
+                    AP_DEATH_LINK_GROUP_KEY % self.slot: {"slot_data": self.slot_data["death_link_group"]},
+                    AP_DEATH_LINK_KEY % self.slot: {"slot_data": self.slot_data["death_link"]},
+                    AP_DEATH_LINK_MODE_KEY % self.slot: {"slot_data": self.slot_data["death_link_mode"]},
+                    AP_DAMAGE_LINK_GROUP_KEY % self.slot: {"slot_data": self.slot_data["damage_link_group"]},
+                    AP_DAMAGE_LINK_KEY % self.slot: {"slot_data": self.slot_data["damage_link"]},
+                }
+                for key, data in keys.items():
+                    if key in requested_keys_dict:
+                        value = requested_keys_dict[key]
+                        if value is None:
+                            if data["slot_data"] is not None:
+                                Utils.async_start(self.update_server_variable(key, data["slot_data"]))
+                                if key == AP_DEATH_LINK_KEY % self.slot:
+                                    Utils.async_start(self.update_death_link(data["slot_data"]))
+                                elif key == AP_DEATH_LINK_GROUP_KEY % self.slot:
+                                    Utils.async_start(self.update_death_link_group(data["slot_data"]))
+                                elif key == AP_DEATH_LINK_MODE_KEY % self.slot:
+                                    self.death_link_mode = data["slot_data"]
+                                elif key == AP_DAMAGE_LINK_KEY % self.slot:
+                                    Utils.async_start(self.update_damage_link(data["slot_data"]))
+                                elif key == AP_DAMAGE_LINK_GROUP_KEY % self.slot:
+                                    Utils.async_start(self.update_damage_link_group(data["slot_data"]))
+                            else:
+                                Utils.async_start(self.update_server_variable(key, []))
+                        else:
+                            if key == AP_ITEM_QUEUE_KEY % self.slot:
+                                self.battle_item_queue = value
+                            elif key == AP_ITEM_QUEUE_IDXS_KEY % self.slot:
+                                self.battle_item_queue_idxs = value
+                            elif key == AP_DEATH_LINK_KEY % self.slot:
+                                Utils.async_start(self.update_death_link(value))
+                            elif key == AP_DEATH_LINK_GROUP_KEY % self.slot:
+                                Utils.async_start(self.update_death_link_group(value))
+                            elif key == AP_DEATH_LINK_MODE_KEY % self.slot:
+                                self.death_link_mode = value
+                            elif key == AP_DAMAGE_LINK_KEY % self.slot:
+                                Utils.async_start(self.update_damage_link(value))
+                            elif key == AP_DAMAGE_LINK_GROUP_KEY % self.slot:
+                                Utils.async_start(self.update_damage_link_group(value))
         elif cmd == "Bounced":
             tags = args.get("tags", [])
             if f"DeathLink{self.death_link_group}" in tags and self.last_death_link != args["data"]["time"]:
@@ -290,7 +379,7 @@ class PBRContext(SuperContext):
         :param data: The data associated with the DeathLink event.
         """
         super().on_deathlink(data)
-        _give_death(self)
+        self.trigger_death = True
 
     def on_damagelink(self, data: dict[str, Any]) -> None:
         """
@@ -305,7 +394,7 @@ class PBRContext(SuperContext):
             logger.info(f"DamageLink: {text}")
         else:
             logger.info(f"DamageLink: Received {damage} damage from {data['source']}")
-        _give_damage(self, damage)
+        self.damage_points += int(damage)
 
     async def send_death(self, death_text: str = ""):
         """Helper function to send a deathlink using death_text as the unique death cause string."""
@@ -338,7 +427,9 @@ class PBRContext(SuperContext):
             }])
 
     async def update_death_link(self, death_link: bool):
-        """Helper function to set Death Link connection tag on/off and update the connection if already connected."""
+        """
+        Helper function to set Death Link connection tag on/off and update the connection if already connected.
+        """
         old_tags = self.tags.copy()
         if death_link:
             self.tags.add(f"DeathLink{self.death_link_group}")
@@ -348,7 +439,9 @@ class PBRContext(SuperContext):
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
     async def update_death_link_group(self, group_name: str):
-        """Helper function to change the Death Link group, updating the connection tag as needed if already connected."""
+        """
+        Helper function to change the Death Link group, updating the connection tag as needed if already connected.
+        """
         death_link: bool = f"DeathLink{self.death_link_group}" in self.tags
         if death_link:
             self.tags -= {f"DeathLink{self.death_link_group}"}
@@ -359,7 +452,9 @@ class PBRContext(SuperContext):
                 await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
     async def update_damage_link(self, damage_link: bool):
-        """Helper function to set Damage Link connection tag on/off and update the connection if already connected."""
+        """
+        Helper function to set Damage Link connection tag on/off and update the connection if already connected.
+        """
         old_tags = self.tags.copy()
         if damage_link:
             self.tags.add(f"SharedDamage{self.damage_link_group}")
@@ -369,7 +464,9 @@ class PBRContext(SuperContext):
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
     
     async def update_damage_link_group(self, group_name: str):
-        """Helper function to change the Damage Link group, updating the connection tag as needed if already connected."""
+        """
+        Helper function to change the Damage Link group, updating the connection tag as needed if already connected.
+        """
         damage_link: bool = f"SharedDamage{self.damage_link_group}" in self.tags
         if damage_link:
             self.tags -= {f"SharedDamage{self.damage_link_group}"}
@@ -378,6 +475,23 @@ class PBRContext(SuperContext):
             self.tags.add(f"SharedDamage{self.damage_link_group}")
             if self.server and not self.server.socket.closed:
                 await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
+
+    async def update_server_variable(self, variable_key: str, variable_value):
+        """
+        Helper funtion to change the value of a variable in the server.
+        """
+        if self.slot is not None:
+            await self.send_msgs(
+                [
+                    {
+                        "cmd": "Set",
+                        "key": variable_key,
+                        "default": {},
+                        "want_reply": False,
+                        "operations": [{"operation": "replace", "value": variable_value}],
+                    }
+                ]
+            )
 
     def make_gui(self) -> type["kvui.GameManager"]:
         """
@@ -397,17 +511,7 @@ def read_short(console_address: int) -> int:
     :param console_address: Address to read from.
     :return: The value read from memory.
     """
-    return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, 2), byteorder="big")
-
-
-def read_word(console_address: int) -> int:
-    """
-    Read a 4-byte word from Dolphin memory.
-
-    :param console_address: Address to read from.
-    :return: The value read from memory.
-    """
-    return int.from_bytes(dolphin_memory_engine.read_bytes(console_address, 4), byteorder="big")
+    return int.from_bytes(dme.read_bytes(console_address, 2), byteorder="big")
 
 
 def write_short(console_address: int, value: int) -> None:
@@ -417,17 +521,7 @@ def write_short(console_address: int, value: int) -> None:
     :param console_address: Address to write to.
     :param value: Value to write.
     """
-    dolphin_memory_engine.write_bytes(console_address, value.to_bytes(2, byteorder="big"))
-
-
-def write_word(console_address: int, value: int) -> None:
-    """
-    Write a 4-byte word to Dolphin memory.
-
-    :param console_address: Address to write to.
-    :param value: Value to write.
-    """
-    dolphin_memory_engine.write_bytes(console_address, value.to_bytes(4, byteorder="big"))
+    dme.write_bytes(console_address, value.to_bytes(2, byteorder="big"))
 
 
 def read_string(console_address: int, strlen: int) -> str:
@@ -438,131 +532,210 @@ def read_string(console_address: int, strlen: int) -> str:
     :param strlen: Length of the string to read.
     :return: The string.
     """
-    return dolphin_memory_engine.read_bytes(console_address, strlen).split(b"\0", 1)[0].decode()
+    return dme.read_bytes(console_address, strlen).split(b"\0", 1)[0].decode()
 
 
-def _give_death(ctx: PBRContext) -> None:
+async def give_death(ctx: PBRContext) -> None:
     """
     Trigger a death in-game.
 
     :param ctx: The Pokémon Battle Revolution client context
     """
-    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
+    if pointer_addr != 0:
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+    else:
+        field_data_addr = 0
+        party_data_addr = 0
     if (
-        ctx.slot is not None
-        and dolphin_memory_engine.is_hooked()
-        and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
-        and check_correct_save(ctx)
-        and read_word(0x806288C4) != 0
-        and pointer_addr != 0
+        check_correct_save(ctx)
+        and dme.read_word(0x806288C4) != 0
+        and field_data_addr != 0
+        and party_data_addr != 0
+        and ctx.trigger_death
     ):
-        field_data_addr = read_word(pointer_addr + 0x30)
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
         if ctx.death_link_mode == 0:
             battle_outcome_addr = pointer_addr + 0x23e4
-            battle_outcome_value = dolphin_memory_engine.read_byte(battle_outcome_addr)
+            battle_outcome_value = dme.read_byte(battle_outcome_addr)
             ctx.has_send_death = True
-            dolphin_memory_engine.write_byte(battle_outcome_addr, (battle_outcome_value & 0xfe) | 0x2)
-            write_word(field_data_addr + 0x8, 0x2b)
+            dme.write_byte(battle_outcome_addr, (battle_outcome_value & 0xfe) | 0x2)
+            dme.write_word(field_data_addr + 0x8, 0x2b)
         else:
+            ctx.can_send_damagelink = False
             # Check if player is in a Single Battle or Double Battle.
-            battle_style = (read_word(read_word(pointer_addr + 0x2c) >> 1)) & 1
-            party_data_addr = read_word(pointer_addr + 0x68)
+            battle_style = (dme.read_word(dme.read_word(pointer_addr + 0x2c) >> 1)) & 1
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
             ctx.has_send_death = True
             if battle_style == 0:
                 pkmn_field_idx = 0
             else:
                 pkmn_field_idx = random.randint(0,1) * 2
-                pkmn_hp = read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
+                pkmn_hp = dme.read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
                 if pkmn_hp <= 0 and pkmn_field_idx == 0:
                     pkmn_field_idx = 2
                 elif pkmn_hp <= 0 and pkmn_field_idx == 2:
                     pkmn_field_idx = 0
-            pkmn_party_idx = dolphin_memory_engine.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
-            pkmn_party_hp_addr = party_data_addr + pkmn_party_idx * 0xa4 + 0x8 + 0x8e
+            pkmn_party_idx = dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
+            pkmn_party_data = party_data_addr + pkmn_party_idx * 0xa4 + 0x8
             pkmn_offset = 0xc0 * pkmn_field_idx
+            pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
+            pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
+            pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
             # Set Pokémon's HP to 0
-            write_word(field_data_addr + 0x2d8c + pkmn_offset, 0x0)
-            write_short(pkmn_party_hp_addr, 0x0)
+            dme.write_word(field_data_addr + 0x2d8c + pkmn_offset, 0x0)
+            write_short(pkmn_party_data + 0x8e, 0x0)
+            if battle_style == 1:
+                logger.info(f"{Gen4Pokemon.create_from_binary(pkmn).nickname} fainted!")
             # Set Pokémon's Moves to Splash (Prevents them from doing anything this turn)
             write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x4, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x6, 0x96)
             # Set Pokémon's Moves' PP to 1 (Prevents them from using Struggle instead of Splash)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
+            if f"SharedDamage{ctx.damage_link_group}" in ctx.tags:
+                ctx.pkmn_hp[pkmn_party_idx] = 0
+            ctx.can_send_damagelink = True
+            # Wait for turn to start.
+            while (
+                dme.read_byte(field_data_addr) < 0xd
+                or dme.read_byte(field_data_addr + 0x1) < 0xd
+                or (
+                    battle_style == 1
+                    and (
+                        dme.read_byte(field_data_addr + 0x2) < 0xd
+                        or dme.read_byte(field_data_addr + 0x3) < 0xd
+                    )
+                )
+            ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                await asyncio.sleep(0.01)
+            # Wait for turn to end.
+            while (
+                dme.read_byte(field_data_addr) >= 0xa
+                and (
+                    battle_style == 0
+                    or (
+                        dme.read_byte(field_data_addr + 0x2) >= 0xa
+                    )
+                )
+            ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                await asyncio.sleep(0.01)
+            # Reset Changes.
+            dme.write_bytes(pkmn_party_data, pkmn)
+            if dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx) == pkmn_party_idx:
+                dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
+                dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
+        ctx.trigger_death = False
 
 
-def _give_damage(ctx: PBRContext, damage: int) -> None:
+async def give_damage(ctx: PBRContext) -> None:
     """
     Damage the Player's Pokémon
 
     :param damage: The amount of damage to deal.
     """
-    damage = int(damage)
-    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
+    if pointer_addr != 0:
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+    else:
+        field_data_addr = 0
+        party_data_addr = 0
     if (
-        ctx.slot is not None
-        and dolphin_memory_engine.is_hooked()
-        and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS
-        and check_correct_save(ctx)
-        and read_word(0x806288C4) != 0
-        and pointer_addr != 0
+        check_correct_save(ctx)
+        and dme.read_word(0x806288C4) != 0
+        and field_data_addr != 0
+        and party_data_addr != 0
+        and ctx.damage_points > 0
     ):
-        field_data_addr = read_word(pointer_addr + 0x30)
+        damage = ctx.damage_points
         # Check if player is in a Single Battle or Double Battle.
-        battle_style = (read_word(pointer_addr + 0x2c) >> 1) & 1
-        party_data_addr = read_word(pointer_addr + 0x68)
+        battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
         ctx.can_send_damagelink = False
         if battle_style == 0:
             pkmn_field_idx = 0
         else:
             pkmn_field_idx = random.randint(0,1) * 2
-            pkmn_hp = read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
+            pkmn_hp = dme.read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
             if pkmn_hp <= 0 and pkmn_field_idx == 0:
                 pkmn_field_idx = 2
             elif pkmn_hp <= 0 and pkmn_field_idx == 2:
                 pkmn_field_idx = 0
-        pkmn_party_idx = dolphin_memory_engine.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
-        pkmn_party_hp_addr = party_data_addr + pkmn_party_idx * 0xa4 + 0x8 + 0x8e
+        pkmn_party_idx = dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
+        pkmn_party_data = party_data_addr + pkmn_party_idx * 0xa4 + 0x8
         pkmn_offset = 0xc0 * pkmn_field_idx
         # Deal the damage.
-        pkmn_hp = read_word(field_data_addr + 0x2d8c + pkmn_offset)
+        pkmn_hp = dme.read_word(field_data_addr + 0x2d8c + pkmn_offset)
         pkmn_hp = max(pkmn_hp - damage, 0)
-        write_word(field_data_addr + 0x2d8c + pkmn_offset, pkmn_hp)
-        write_short(pkmn_party_hp_addr, pkmn_hp)
+        dme.write_word(field_data_addr + 0x2d8c + pkmn_offset, pkmn_hp)
+        write_short(pkmn_party_data + 0x8e, pkmn_hp)
+        if battle_style == 1:
+            pkmn_name = dme.read_bytes(field_data_addr + pkmn_offset + 0x2d76, 22)
+            pkmn_name = decode_text(pkmn_name, 11)
+            logger.info(f"{pkmn_name} took {damage} damage!")
         if pkmn_hp <= 0:
+            pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
+            pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
+            pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
             # Set Pokémon's Moves to Splash if they'll faint (Prevents them from doing anything this turn)
             write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x4, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x6, 0x96)
             # Set Pokémon's Moves' PP to 1 if they'll faint (Prevents them from using Struggle instead of Splash)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
-            dolphin_memory_engine.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
-        if battle_style == 1:
-            pkmn_name = dolphin_memory_engine.read_bytes(field_data_addr + pkmn_offset + 0x2d76, 22)
-            pkmn_name = decode_text(pkmn_name, 11)
-            logger.info(f"{pkmn_name} took the damage!")
-        ctx.pkmn_hp[pkmn_party_idx] = pkmn_hp
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
+            dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
+            # Wait for turn to start.
+            while (
+                dme.read_byte(field_data_addr) < 0xd
+                or dme.read_byte(field_data_addr + 0x1) < 0xd
+                or (
+                    battle_style == 1
+                    and (
+                        dme.read_byte(field_data_addr + 0x2) < 0xd
+                        or dme.read_byte(field_data_addr + 0x3) < 0xd
+                    )
+                )
+            ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                await asyncio.sleep(0.01)
+            # Wait for turn to end.
+            while (
+                dme.read_byte(field_data_addr) >= 0xa
+                and (
+                    battle_style == 0
+                    or dme.read_byte(field_data_addr + 0x2) >= 0xa
+                )
+            ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                await asyncio.sleep(0.01)
+            # Reset Changes.
+            dme.write_bytes(pkmn_party_data, pkmn)
+            if dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx) == pkmn_party_idx:
+                dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
+                dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
+        if len(ctx.pkmn_hp) > (pkmn_party_idx + 1):
+            ctx.pkmn_hp[pkmn_party_idx] = pkmn_hp
         ctx.can_send_damagelink = True
+        ctx.damage_points -= damage
 
 
 def find_save_file_address():
     """
     Finds the starting address of the current profile in memory.
     """
-    save_file = read_word(SAVE_FILE_FIND_ADDR)
+    save_file = dme.read_word(SAVE_FILE_FIND_ADDR)
     return (
-        save_file + dolphin_memory_engine.read_byte(save_file + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET + SAVE_SLOT_START
+        save_file + dme.read_byte(save_file + SAVE_SLOT_CURRENT) * SAVE_SLOT_OFFSET + SAVE_SLOT_START
     )
 
 
-def _give_item(ctx: PBRContext, item_name: str) -> bool:
+def _give_item(ctx: PBRContext, item_name: str, index: int) -> bool:
     """
     Give an item to the player in-game.
 
@@ -578,30 +751,36 @@ def _give_item(ctx: PBRContext, item_name: str) -> bool:
     match ITEM_TABLE[item_name].group:
         case "Colosseums":
             colo_flag_value = read_short(save_file_address + COLOSSEUMS_BITFIELD)
-            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | ITEM_TABLE[item_name].value)
+            write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | (0x1 << ITEM_TABLE[item_name].values[0]))
             return True
         case "Rental Passes":
-            rental_pass_value = dolphin_memory_engine.read_byte(save_file_address + ITEM_TABLE[item_name].value)
-            dolphin_memory_engine.write_byte(save_file_address + ITEM_TABLE[item_name].value,
-                                             rental_pass_value | 0x10)
-            unlocked_rental_passes = dolphin_memory_engine.read_byte(save_file_address + PASS_UNLOCK_BITFIELD)
-            dolphin_memory_engine.write_byte(save_file_address + PASS_UNLOCK_BITFIELD,
-                                             unlocked_rental_passes | (0x1 << ITEM_TABLE[item_name].bit))
+            rental_pass_value = dme.read_byte(save_file_address + ITEM_TABLE[item_name].values[0])
+            dme.write_byte(save_file_address + ITEM_TABLE[item_name].values[0],
+                           rental_pass_value | 0x10)
+            unlocked_rental_passes = dme.read_byte(save_file_address + PASS_UNLOCK_BITFIELD)
+            dme.write_byte(save_file_address + PASS_UNLOCK_BITFIELD,
+                           unlocked_rental_passes | (0x1 << ITEM_TABLE[item_name].values[1]))
             return True
         case "Poké Coupons":
-            poke_coupons_value = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + POKE_COUPONS, 3))
-            if poke_coupons_value + ITEM_TABLE[item_name].value >= 999999:
-                dolphin_memory_engine.write_bytes(save_file_address + POKE_COUPONS, 0xF423F.to_bytes(3, byteorder="big"))
-            else:
-                dolphin_memory_engine.write_bytes(save_file_address + POKE_COUPONS,
-                                                 (poke_coupons_value + ITEM_TABLE[item_name].value).to_bytes(3, byteorder="big"))
+            poke_coupons_value = int.from_bytes(dme.read_bytes(save_file_address + POKE_COUPONS, 3))
+            poke_coupons_value = min(poke_coupons_value + ITEM_TABLE[item_name].values[0], 0xF423F)
+            dme.write_bytes(save_file_address + POKE_COUPONS, poke_coupons_value.to_bytes(3, byteorder="big"))
             return True
         case "Macguffin":
-            current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
+            current_badge_count = dme.read_byte(save_file_address + BADGE_COUNT)
             # The player should never need more than 255 badges to goal, so getting past that number is unecessary.
             if current_badge_count < 0xFF:
                 current_badge_count += 0x1
-                dolphin_memory_engine.write_byte(save_file_address + BADGE_COUNT, current_badge_count)
+                dme.write_byte(save_file_address + BADGE_COUNT, current_badge_count)
+            return True
+        case _:
+            if index not in ctx.battle_item_queue_idxs:
+                item_queue_key = AP_ITEM_QUEUE_KEY % ctx.slot
+                item_queue_idxs_key = AP_ITEM_QUEUE_IDXS_KEY % ctx.slot
+                ctx.battle_item_queue.append(item_name)
+                ctx.battle_item_queue_idxs.append(index)
+                Utils.async_start(ctx.update_server_variable(item_queue_key, ctx.battle_item_queue))
+                Utils.async_start(ctx.update_server_variable(item_queue_idxs_key, ctx.battle_item_queue_idxs))
             return True
     # If unable to place the item in the array, return `False`.
     return False
@@ -630,11 +809,164 @@ async def give_items(ctx: PBRContext) -> None:
         # Give the player all items at an index greater than or equal to the expected index.
         for idx, item in enumerate(received_items[expected_idx:], start=expected_idx):
             # Attempt to give the item and increment the expected index.
-            while not _give_item(ctx, LOOKUP_ID_TO_NAME[item.item]):
+            while not _give_item(ctx, LOOKUP_ID_TO_NAME[item.item], idx):
                 await asyncio.sleep(0.01)
 
             # Increment the expected index.
             write_short(save_file_address + EXPECTED_INDEX_OFFSET, idx + 1)
+
+
+async def battle_item_queue(ctx: PBRContext) -> None:
+    """
+    A queue for items that can only be received mid-battle
+
+    :param ctx: Pokémon Battle Revolution client context.  
+    """
+    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
+    if pointer_addr != 0:
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+    else:
+        field_data_addr = 0
+        party_data_addr = 0
+    if (
+        check_correct_save(ctx)
+        and dme.read_word(0x806288C4) != 0
+        and field_data_addr != 0
+        and party_data_addr != 0
+        and len(ctx.battle_item_queue) > 0
+    ):
+        item = ctx.battle_item_queue[0]
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
+        battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+        if battle_style == 0:
+            pkmn_field_idx = 0
+        else:
+            pkmn_field_idx = random.randint(0,1) * 2
+            pkmn_hp = dme.read_word(field_data_addr + 0x2d8c + 0xc0 * pkmn_field_idx)
+            if pkmn_hp <= 0 and pkmn_field_idx == 0:
+                pkmn_field_idx = 2
+            elif pkmn_hp <= 0 and pkmn_field_idx == 2:
+                pkmn_field_idx = 0
+        pkmn_party_idx = dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx)
+        pkmn_offset = 0xc0 * pkmn_field_idx
+        pkmn_field_data = field_data_addr + pkmn_offset
+        pkmn_party_data = party_data_addr + pkmn_party_idx * 0xa4 + 0x8
+        pkmn_nickname = decode_text(dme.read_bytes(field_data_addr + pkmn_offset + 0x2d76, 22), 11)
+        use_up_item = True
+        item_data = ITEM_TABLE[item]
+        match item_data.group:
+            case "Heals":
+                pkmn_hp = dme.read_word(field_data_addr + pkmn_offset + 0x2d8c)
+                if pkmn_hp > 0:
+                    pkmn_max_hp = dme.read_word(pkmn_field_data + 0x2d90)
+                    if pkmn_hp >= pkmn_max_hp:
+                        use_up_item = False
+                    else:
+                        pkmn_hp = min(pkmn_hp + item_data.values[0], pkmn_max_hp)
+                        dme.write_word(pkmn_field_data + 0x2d8c, pkmn_hp)
+                        write_short(pkmn_party_data + 0x8e, pkmn_hp)
+                        logger.info(f"{item} was used! {pkmn_nickname} was healed to {pkmn_hp} HP!")
+                else:
+                    use_up_item = False
+            case "Stat Changes":
+                stat_addr = pkmn_field_data + 0x2d58 + item_data.values[0]
+                current_stat_mod = dme.read_byte(stat_addr)
+                new_stat_mod = max(min(current_stat_mod + item_data.values[1], 0xc), 0)
+                if current_stat_mod == new_stat_mod:
+                    use_up_item = False
+                else:
+                    dme.write_byte(stat_addr, new_stat_mod)
+                    if "Trap" in item:
+                        stat = item.removesuffix(" Drop Trap")
+                        logger.info(f"{item} procced! {pkmn_nickname}'s {stat} stat modifier was lowered to {new_stat_mod - 6}!")
+                    else:
+                        stat = item.removeprefix("X ")
+                        logger.info(f"{item} was used! {pkmn_nickname}'s {stat} stat modifier was raised to {new_stat_mod - 6}!")
+            case "Perfect Points":
+                perfect_points_addr = dme.read_word(dme.read_word(0x806257f8) + 0x30) + 0x1a
+                current_perfect_points = dme.read_byte(perfect_points_addr)
+                if current_perfect_points >= 0xff:
+                    use_up_item = False
+                else:
+                    new_perfect_points = min(current_perfect_points + item_data.values[0], 0xff)
+                    dme.write_byte(perfect_points_addr, new_perfect_points)
+                    logger.info(f"Perfect Point count was raised from {current_perfect_points} to {new_perfect_points}!")
+            case "Status Conditions":
+                if item != "Sleep Trap":
+                    status = 0x1 << item_data.values[0]
+                else:
+                    status = random.randint(2,5)
+                dme.write_byte(pkmn_field_data + 0x2daf, status)
+                dme.write_byte(pkmn_party_data + 0x8b, status)
+                logger.info(f"{item} procced! {pkmn_nickname} was hit by the trap!")
+            case "Move Changes":
+                # Wait until Player is not in the switch Pokémon menu or has already chosen an action.
+                while (
+                    dme.read_byte(field_data_addr + pkmn_field_idx) >= 0x9
+                ):
+                    await asyncio.sleep(0.01)
+                # Grab Pokémon's data to revert changes at the end of the turn.
+                volatile_statuses = dme.read_word(field_data_addr + 0x2db0 + pkmn_offset)
+                pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
+                pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
+                pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
+                # Trap Pokémon in the field, to prevent switching out and nullifying the trap.
+                is_already_trapped = bool((volatile_statuses >> 26) & 0x1)
+                if not is_already_trapped:
+                    dme.write_word(field_data_addr + 0x2db0 + pkmn_offset, volatile_statuses | (0x1 << 26))
+                write_short(field_data_addr + 0x2d4c + pkmn_offset, item_data.values[0])
+                write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, item_data.values[0])
+                write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x4, item_data.values[0])
+                write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x6, item_data.values[0])
+                dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset, item_data.values[1])
+                dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, item_data.values[1])
+                dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, item_data.values[1])
+                dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, item_data.values[1])
+                logger.info(f"{item} procced! {pkmn_nickname} was hit by the trap!")
+                # Wait for turn to start.
+                while (
+                    dme.read_byte(field_data_addr) < 0xd
+                    or dme.read_byte(field_data_addr + 0x1) < 0xd
+                    or (
+                        battle_style == 1
+                        and (
+                            dme.read_byte(field_data_addr + 0x2) < 0xd
+                            or dme.read_byte(field_data_addr + 0x3) < 0xd
+                        )
+                    )
+                ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                    await asyncio.sleep(0.01)
+                # Wait for turn to end.
+                while (
+                    dme.read_byte(field_data_addr) >= 0xa
+                    and (
+                        battle_style == 0
+                        or (
+                            dme.read_byte(field_data_addr + 0x2) >= 0xa
+                        )
+                    )
+                ) and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                    await asyncio.sleep(0.01)
+                # Reset Changes.
+                dme.write_bytes(pkmn_party_data, pkmn)
+                if dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx) == pkmn_party_idx:
+                    dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
+                    dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
+                    if not is_already_trapped:
+                        volatile_statuses = dme.read_word(field_data_addr + 0x2db0 + pkmn_offset)
+                        volatile_statuses = volatile_statuses & 0xfbffffff
+                        dme.write_word(field_data_addr + 0x2db0 + pkmn_offset, volatile_statuses)
+        if not use_up_item:
+            ctx.battle_item_queue.append(item)
+            ctx.battle_item_queue_idxs.append(ctx.battle_item_queue_idxs[0])
+        ctx.battle_item_queue.pop(0)
+        ctx.battle_item_queue_idxs.pop(0)
+        item_queue_key = AP_ITEM_QUEUE_KEY % ctx.slot
+        item_queue_idxs_key = AP_ITEM_QUEUE_IDXS_KEY % ctx.slot
+        Utils.async_start(ctx.update_server_variable(item_queue_key, ctx.battle_item_queue))
+        Utils.async_start(ctx.update_server_variable(item_queue_idxs_key, ctx.battle_item_queue_idxs))
 
 
 async def check_locations(ctx: PBRContext) -> None:
@@ -652,7 +984,7 @@ async def check_locations(ctx: PBRContext) -> None:
         # Loop through all locations to see if each has been checked.
         for location, data in LOCATION_TABLE.items():
             checked = False
-            check_value = dolphin_memory_engine.read_byte(save_file_address + data.offset)
+            check_value = dme.read_byte(save_file_address + data.offset)
             if data.bit == None:
                 if check_value > 0x0:
                     checked = True
@@ -686,7 +1018,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
 
         if not bool((colo_flag_value >> 13) & 1):
             if ctx.slot_data["goal_unlock_method"] != 1:
-                current_badge_count = dolphin_memory_engine.read_byte(save_file_address + BADGE_COUNT)
+                current_badge_count = dme.read_byte(save_file_address + BADGE_COUNT)
                 if current_badge_count >= ctx.slot_data["required_badge_amount"]:
                     badge_hunt_req = True
             else:
@@ -695,7 +1027,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
             if ctx.slot_data["goal_unlock_method"] != 0:
                 for location, data in LOCATION_TABLE.items():
                     if data.group == "Colosseum Clears":
-                        colosseum_clears_value = dolphin_memory_engine.read_byte(save_file_address + data.bit)
+                        colosseum_clears_value = dme.read_byte(save_file_address + data.offset)
                         if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
                             ctx.colosseums_cleared.append(data.region)
                 if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
@@ -704,6 +1036,7 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
                 colosseum_clear_req = True
                 
             if badge_hunt_req and colosseum_clear_req:
+                logger.info("Goal condition has been met! Stargazer Colosseum was unlocked!")
                 write_short(save_file_address + COLOSSEUMS_BITFIELD, colo_flag_value | 0x2000)
 
 
@@ -711,18 +1044,23 @@ async def check_death(ctx: PBRContext) -> None:
     """
     Check for if a Death Link should be sent.
     """
-    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
+    if pointer_addr != 0:
+        field_data_addr = dme.read_word(pointer_addr + 0x30)
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+    else:
+        field_data_addr = 0
+        party_data_addr = 0
     if (
         check_correct_save(ctx)
-        and read_word(0x806288C4) != 0
-        and pointer_addr != 0
+        and dme.read_word(0x806288C4) != 0
+        and field_data_addr != 0
+        and party_data_addr != 0
     ):
-        field_data_addr = read_word(pointer_addr + 0x30)
         battle_lost = bool(
-            (dolphin_memory_engine.read_byte(pointer_addr + 0x23e4) >> 1) & 0x1
+            (dme.read_byte(pointer_addr + 0x23e4) >> 1) & 0x1
         )
-        party_data_addr = read_word(pointer_addr + 0x68)
-        party_size = read_word(party_data_addr + 0x4)
+        party_size = dme.read_word(party_data_addr + 0x4)
         pokemon_alive = 0
         for i in range(party_size):
             pokemon_data_addr = party_data_addr + i * 0xa4 + 0x8
@@ -736,19 +1074,19 @@ async def check_death(ctx: PBRContext) -> None:
             if battle_lost and pokemon_alive <= 0 and not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
                 ctx.has_send_death = True
                 await ctx.send_death(ctx.player_names[ctx.slot] + " lost the battle!")
-            elif not battle_lost and read_word(field_data_addr + 0x8) != 0x2b:
+            elif not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
         else:
             # Check if player is in a Single Battle or Double Battle.
-            battle_style = (read_word(pointer_addr + 0x2c) >> 1) & 1
+            battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
             check_pokemon_1 = True
             check_pokemon_2 = True
-            pokemon_1_hp = read_word(field_data_addr + 0x2d8c)
-            pokemon_1_name = dolphin_memory_engine.read_bytes(field_data_addr + 0x2d76, 22)
+            pokemon_1_hp = dme.read_word(field_data_addr + 0x2d8c)
+            pokemon_1_name = dme.read_bytes(field_data_addr + 0x2d76, 22)
             pokemon_1_name = decode_text(pokemon_1_name, 11)
             if battle_style == 1:
-                pokemon_2_hp = read_word(field_data_addr + 0x2d8c + 0x180)
-                pokemon_2_name = dolphin_memory_engine.read_bytes(field_data_addr + 0x2d76 + 0x180, 22)
+                pokemon_2_hp = dme.read_word(field_data_addr + 0x2d8c + 0x180)
+                pokemon_2_name = dme.read_bytes(field_data_addr + 0x2d76 + 0x180, 22)
                 pokemon_2_name = decode_text(pokemon_2_name, 11)
                 # Stop checking a slot's HP if there is no Pokémon there. (Player only has 1 Pokémon left.)
                 if pokemon_alive == 1:
@@ -763,14 +1101,14 @@ async def check_death(ctx: PBRContext) -> None:
                 elif (
                     (pokemon_1_hp > 0 or not check_pokemon_1)
                     and not battle_lost
-                    and read_word(field_data_addr + 0x8) != 0x2b
+                    and dme.read_word(field_data_addr + 0x8) != 0x2b
                 ):
                     ctx.has_send_death = False
             if pokemon_1_hp <= 0 and check_pokemon_1:
                 if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
                     ctx.has_send_death = True
                     await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_1_name} fainted!")
-            elif battle_style == 0 and not battle_lost and read_word(field_data_addr + 0x8) != 0x2b:
+            elif battle_style == 0 and not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
 
 
@@ -778,22 +1116,25 @@ async def check_damage(ctx: PBRContext) -> None:
     """
     Check for if Damage Links should be sent, and how much damage to send.
     """
-    pointer_addr = read_word(read_word(read_word(0x806288C4) + 0x14) + 0x1c)
+    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
+    if pointer_addr != 0:
+        party_data_addr = dme.read_word(pointer_addr + 0x68)
+    else:
+        party_data_addr = 0
     if (
         check_correct_save(ctx)
-        and read_word(0x806288C4) != 0
-        and pointer_addr != 0
+        and dme.read_word(0x806288C4) != 0
+        and party_data_addr != 0
     ):
         if ctx.can_send_damagelink and time.time() >= ctx.last_damage_link + 0.5:
-            party_data_addr = read_word(pointer_addr + 0x68)
-            party_size = read_word(party_data_addr + 0x4)
+            party_size = dme.read_word(party_data_addr + 0x4)
             if ctx.has_got_pkmn_dmg_data:
                 damage = 0
                 pokemon_data_addr = party_data_addr + ctx.dmglink_pkmn_idx * 0xa4 + 0x8
                 new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
                 damage = max(ctx.pkmn_hp[ctx.dmglink_pkmn_idx] - new_pkmn_hp, 0)
                 if damage > 0:
-                    pkmn = Gen4Pokemon.create_from_binary(dolphin_memory_engine.read_bytes(pokemon_data_addr, PKMM_SIZE))
+                    pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMM_SIZE))
                     await ctx.send_damage(damage, f"{ctx.player_names[ctx.slot]}'s {pkmn.nickname} took {damage} damage!")
                 ctx.pkmn_hp[ctx.dmglink_pkmn_idx] = new_pkmn_hp
                 ctx.dmglink_pkmn_idx += 1
@@ -818,17 +1159,24 @@ def check_correct_save(ctx: PBRContext) -> bool:
     """
     save_file_address = find_save_file_address()
     if check_ingame():
-        save_check = int.from_bytes(dolphin_memory_engine.read_bytes(save_file_address + SAVE_SLOT_NAME, 26), byteorder="big")
+        save_check = int.from_bytes(dme.read_bytes(save_file_address + SAVE_SLOT_NAME, 26), byteorder="big")
         if save_check == 0:
-            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
-            dolphin_memory_engine.write_bytes(save_file_address + SAVE_SEED, ctx.server_seed_name.encode('utf-8')[0:10])
+            dme.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
+            dme.write_bytes(save_file_address + SAVE_SEED, ctx.server_seed_name.encode('utf-8')[0:10])
+            if not ctx.correct_save:
+                logger.info(CONNECTION_CONNECTED_SAVE_STATUS)
+                ctx.correct_save = True
             return True
         else:
             save_name = read_string(save_file_address + SAVE_SLOT_NAME, 16)
             save_seed = read_string(save_file_address + SAVE_SEED, 10)
             if save_name == ctx.username and save_seed == ctx.server_seed_name[0:10]:
+                if not ctx.correct_save:
+                    logger.info(CONNECTION_CONNECTED_SAVE_STATUS)
+                    ctx.correct_save = True
                 return True
             logger.info(CONNECTION_REFUSED_SAVE_STATUS)
+            ctx.correct_save = False
     # Return False if all other conditions are not met.
     return False
 
@@ -841,7 +1189,7 @@ def check_ingame() -> bool:
     """
     save_file_address = find_save_file_address()
     return (
-        bool((dolphin_memory_engine.read_byte(save_file_address + 0x12565) >> 6) & 1) and
+        bool((dme.read_byte(save_file_address + 0x12565) >> 6) & 1) and
         read_string(save_file_address + AP_SAVE_CHECK, 4) == "APBR"
     )
 
@@ -867,19 +1215,22 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
         ctx.watcher_event.clear()
 
         try:
-            if dolphin_memory_engine.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
+            if dme.is_hooked() and ctx.dolphin_status == CONNECTION_CONNECTED_STATUS:
                 if not check_ingame():
                     sleep_time = 0.1
                     continue
                 if ctx.slot is not None:
                     if check_correct_save(ctx):
                         if f"DeathLink{ctx.death_link_group}" in ctx.tags:
+                            await give_death(ctx)
                             await check_death(ctx)
                         if f"SharedDamage{ctx.damage_link_group}" in ctx.tags:
+                            await give_damage(ctx)
                             await check_damage(ctx)
                         await give_items(ctx)
                         await check_locations(ctx)
                         await check_stargazer_unlock(ctx)
+                        await battle_item_queue(ctx)
                     else:
                         sleep_time = 5
                         continue
@@ -894,12 +1245,12 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     logger.info("Connection to Dolphin lost, reconnecting...")
                     ctx.dolphin_status = CONNECTION_LOST_STATUS
                 logger.info("Attempting to connect to Dolphin...")
-                dolphin_memory_engine.hook()
-                if dolphin_memory_engine.is_hooked():
-                    if dolphin_memory_engine.read_bytes(0x80000000, 6) != b"RPBE01":
+                dme.hook()
+                if dme.is_hooked():
+                    if dme.read_bytes(0x80000000, 6) != b"RPBE01":
                         logger.info(CONNECTION_REFUSED_GAME_STATUS)
                         ctx.dolphin_status = CONNECTION_REFUSED_GAME_STATUS
-                        dolphin_memory_engine.un_hook()
+                        dme.un_hook()
                         sleep_time = 5
                     else:
                         logger.info(CONNECTION_CONNECTED_STATUS)
@@ -912,7 +1263,7 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                     sleep_time = 5
                     continue
         except Exception:
-            dolphin_memory_engine.un_hook()
+            dme.un_hook()
             logger.info("Connection to Dolphin failed, attempting again in 5 seconds...")
             logger.error(traceback.format_exc())
             ctx.dolphin_status = CONNECTION_LOST_STATUS

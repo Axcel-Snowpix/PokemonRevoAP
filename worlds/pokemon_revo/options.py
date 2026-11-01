@@ -164,6 +164,83 @@ class Battlesanity(Toggle):
     """
     display_name = "Battlesanity"
 
+class PokeCouponWeight(Range):
+    """
+    Determines the weighted chance of Poké Coupons being added when filling the item pool.
+    """
+    display_name = "Poké Coupon Weight"
+    range_start = 0
+    range_end = 50
+    default = 10
+
+class HealingItemWeight(Range):
+    """
+    Determines the weighted chance of healing items being added when filling the item pool.
+    These will instantly heal one of your currently sent out Pokémon when possible.
+    """
+    display_name = "Healing Item Weight"
+    range_start = 0
+    range_end = 50
+    default = 8
+
+class StatBoostWeight(Range):
+    """
+    Determines the weighted chance of stat boosting items being added when filling the item pool.
+    These will instantly increase a stat of one of your currently sent out Pokémon when possible.
+    """
+    display_name = "Stat Boost Weight"
+    range_start = 0
+    range_end = 50
+    default = 10
+
+class PerfectPointWeight(Range):
+    """
+    Determines the weighted chance of Perfect Points being added when filling the item pool.
+    """
+    display_name = "Perfect Point Weight"
+    range_start = 0
+    range_end = 50
+    default = 5
+
+class TrapPercentageChance(Range):
+    """
+    Determines the percentage chance of a trap being added when filling the item pool.
+    """
+    display_name = "Trap Percentage Chance"
+    range_start = 0
+    range_end = 100
+    default = 10
+
+class StatusConditionTrapWeight(Range):
+    """
+    Determines the weighted chance of Status Conditions being chosen when adding traps to the item pool.
+    These will instantly give one of your currently sent out Pokémon a Non-Volatile Status Condition.
+    """
+    display_name = "Status Condition Trap Weight"
+    range_start = 0
+    range_end = 50
+    default = 10
+
+class StatDropTrapWeight(Range):
+    """
+    Determines the weighted chance of stat drops being chosen when adding traps to the item pool.
+    These will instantly decrease a stat of one of your currently sent out Pokémon when possible.
+    """
+    display_name = "Stat Drop Trap Weight"
+    range_start = 0
+    range_end = 50
+    default = 10
+
+class MetronomeTrapWeight(Range):
+    """
+    Determines the weighted chance of Metronome Traps being chosen when adding traps to the item pool.
+    These will replace all of the moves of one of your currently sent out Pokémon with Metronome for a single turn.
+    """
+    display_name = "Metronome Trap Weight"
+    range_start = 0
+    range_end = 50
+    default = 3
+
 @dataclass
 class PBROptions(PerGameCommonOptions):
     death_link: DeathLink
@@ -181,6 +258,14 @@ class PBROptions(PerGameCommonOptions):
     randomize_rental_passes: RandomizeRentalPasses
     starting_rental_pass: StartingRentalPass
     battlesanity: Battlesanity
+    poke_coupon_weight: PokeCouponWeight
+    healing_item_weight: HealingItemWeight
+    stat_boost_weight: StatBoostWeight
+    perfect_point_weight: PerfectPointWeight
+    trap_percentage_chance: TrapPercentageChance
+    status_condition_trap_weight: StatusConditionTrapWeight
+    stat_drop_trap_weight: StatDropTrapWeight
+    metronome_trap_weight: MetronomeTrapWeight
 
 option_groups = [
     OptionGroup(
@@ -190,5 +275,13 @@ option_groups = [
     OptionGroup(
         "Main Options",
         [StartingColosseumAmount, StartingColosseumPool, RandomizeRentalPasses, StartingRentalPass, Battlesanity],
+    ),
+    OptionGroup(
+        "Filler Item Options",
+        [PokeCouponWeight, HealingItemWeight, StatBoostWeight, PerfectPointWeight],
+    ),
+    OptionGroup(
+        "Trap Options",
+        [TrapPercentageChance, StatusConditionTrapWeight, StatDropTrapWeight, MetronomeTrapWeight],
     ),
 ]

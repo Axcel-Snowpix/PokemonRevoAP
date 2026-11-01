@@ -16,15 +16,13 @@ class PBRItemData(NamedTuple):
     :param group: The group the item is in (e.g. "Colosseums", "Rental Passes").
     :param classification: The item's classification (progression, useful, filler).
     :param code: The unique code identifier for the item.
-    :param value: A special value used for giving the item to the player.
-    :param bit: The bit index used to check if a Colosseum has already been obtained.
+    :param values: Special values used for giving the item to the player.
     """
 
     group: str
     classification: ItemClassification
     code: int
-    value: Optional[int]
-    bit: Optional[int]
+    values: Optional[list] = None
 
 
 class PBRItem(Item):
@@ -32,29 +30,60 @@ class PBRItem(Item):
 
 
 ITEM_TABLE: dict[str, PBRItemData] = {
-    "Gateway Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 1,  0x0010, 4),
-    "Main Street Colosseum": PBRItemData("Colosseums", ItemClassification.progression, 2,  0x0020, 5),
-    "Waterfall Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 3,  0x0040, 6),
-    "Neon Colosseum":        PBRItemData("Colosseums", ItemClassification.progression, 4,  0x0080, 7),
-    "Crystal Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 5,  0x0100, 8),
-    "Sunny Park Colosseum":  PBRItemData("Colosseums", ItemClassification.progression, 6,  0x0200, 9),
-    "Magma Colosseum":       PBRItemData("Colosseums", ItemClassification.progression, 7,  0x0400, 10),
-    "Courtyard Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 8,  0x0800, 11),
-    "Sunset Colosseum":      PBRItemData("Colosseums", ItemClassification.progression, 9,  0x1000, 12),
-   #"Stargazer Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 10, 0x2000, 13),
+    "Gateway Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 1,  [4]),
+    "Main Street Colosseum": PBRItemData("Colosseums", ItemClassification.progression, 2,  [5]),
+    "Waterfall Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 3,  [6]),
+    "Neon Colosseum":        PBRItemData("Colosseums", ItemClassification.progression, 4,  [7]),
+    "Crystal Colosseum":     PBRItemData("Colosseums", ItemClassification.progression, 5,  [8]),
+    "Sunny Park Colosseum":  PBRItemData("Colosseums", ItemClassification.progression, 6,  [9]),
+    "Magma Colosseum":       PBRItemData("Colosseums", ItemClassification.progression, 7,  [10]),
+    "Courtyard Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 8,  [11]),
+    "Sunset Colosseum":      PBRItemData("Colosseums", ItemClassification.progression, 9,  [12]),
+   #"Stargazer Colosseum":   PBRItemData("Colosseums", ItemClassification.progression, 10, [13]),
 
-    "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_skip_balancing, 10, None, None),
+    "Pokétopia Badge": PBRItemData("Macguffin", ItemClassification.progression_skip_balancing, 10),
 
-    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 11, 0x23A39, 0),
-    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 12, 0x24125, 1),
-    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 13, 0x24811, 2),
-    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 14, 0x24EFD, 3),
-    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 15, 0x255E9, 4),
-    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 16, 0x25CD5, 5),
+    "Cyndy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 11, [0x23A39, 0]),
+    "Nate's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 12, [0x24125, 1]),
+    "Tommy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 13, [0x24811, 2]),
+    "Daisy's Rental Pass":   PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 14, [0x24EFD, 3]),
+    "Joel's Rental Pass":    PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 15, [0x255E9, 4]),
+    "Natalie's Rental Pass": PBRItemData("Rental Passes", ItemClassification.progression_deprioritized, 16, [0x25CD5, 5]),
 
-    "100 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 17, 0x64,  None),
-    "200 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 18, 0xC8,  None),
-    "300 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 19, 0x12C, None),
+    "100 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 17, [0x64]),
+    "200 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 18, [0xC8]),
+    "300 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 19, [0x12C]),
+    "500 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 20, [0x1F4]),
+    "1000 Poké Coupons": PBRItemData("Poké Coupons", ItemClassification.filler, 21, [0x3E8]),
+
+    "Potion": PBRItemData("Heals", ItemClassification.filler, 22, [0x14]),
+    "Super Potion": PBRItemData("Heals", ItemClassification.filler, 23, [0x32]),
+    "Hyper Potion": PBRItemData("Heals", ItemClassification.filler, 24, [0xC8]),
+
+    "X Attack": PBRItemData("Stat Changes", ItemClassification.filler, 25, [0x1, 0x1]),
+    "X Defense": PBRItemData("Stat Changes", ItemClassification.filler, 26, [0x2, 0x1]),
+    "X Speed": PBRItemData("Stat Changes", ItemClassification.filler, 27, [0x3, 0x1]),
+    "X Sp. Atk": PBRItemData("Stat Changes", ItemClassification.filler, 28, [0x4, 0x1]),
+    "X Sp. Def": PBRItemData("Stat Changes", ItemClassification.filler, 29, [0x5, 0x1]),
+    "X Accuracy": PBRItemData("Stat Changes", ItemClassification.filler, 30, [0x6, 0x1]),
+
+    "+1 Perfect Point": PBRItemData("Perfect Points", ItemClassification.filler, 31, [0x1]),
+
+    "Poison Trap": PBRItemData("Status Conditions", ItemClassification.trap, 32, [3]),
+    "Burn Trap": PBRItemData("Status Conditions", ItemClassification.trap, 33, [4]),
+    "Freeze Trap": PBRItemData("Status Conditions", ItemClassification.trap, 34, [5]),
+    "Paralysis Trap": PBRItemData("Status Conditions", ItemClassification.trap, 35, [6]),
+    "Toxic Trap": PBRItemData("Status Conditions", ItemClassification.trap, 36, [7]),
+    "Sleep Trap": PBRItemData("Status Conditions", ItemClassification.trap, 37),
+
+    "Attack Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 38, [0x1, -0x1]),
+    "Defense Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 39, [0x2, -0x1]),
+    "Speed Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 40, [0x3, -0x1]),
+    "Sp. Atk Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 41, [0x4, -0x1]),
+    "Sp. Def Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 42, [0x5, -0x1]),
+    "Evasion Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 43, [0x7, -0x1]),
+
+    "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 44, [0x76, 0xA]),
 }
 
 
@@ -64,13 +93,41 @@ LOOKUP_ID_TO_NAME: dict[int, str] = {
 
 
 def get_random_filler_item_name(world: PBRWorld) -> str:
-    filler_item_list = []
-
+    increased_weight_items = [
+        "100 Poké Coupons", "200 Poké Coupons", "300 Poké Coupons",
+        "Poison Trap", "Burn Trap", "Paralysis Trap"
+    ]
+    if world.random.randint(0,99) >= world.options.trap_percentage_chance:
+        item_groups = ["Poké Coupons", "Heals", "Stat Changes", "Perfect Points"]
+        item_weights = [
+            world.options.poke_coupon_weight, world.options.healing_item_weight,
+            world.options.stat_boost_weight, world.options.perfect_point_weight,
+        ]
+        classification = ItemClassification.filler
+    else:
+        item_groups = ["Status Conditions", "Stat Changes", "Move Changes"]
+        item_weights = [
+            world.options.status_condition_trap_weight, world.options.stat_drop_trap_weight,
+            world.options.metronome_trap_weight,
+        ]
+        classification = ItemClassification.trap
+    item_pool = []
+    for i in range(len(item_groups)):
+        for _ in range(item_weights[i]):
+            item_pool.append(item_groups[i])
+    if len(item_pool) <= 0:
+        item_pool = item_groups
+    group = item_pool[world.random.randrange(0,len(item_pool))]
+    item_list = []
     for item, data in ITEM_TABLE.items():
-        if data.classification == ItemClassification.filler:
-            filler_item_list.append(item)
-
-    return filler_item_list[world.random.randrange(0,len(filler_item_list))]
+        if data.group == group and data.classification == classification:
+            if item in increased_weight_items:
+                item_list.append(item)
+                item_list.append(item)
+                item_list.append(item)
+            else:
+                item_list.append(item)
+    return item_list[world.random.randrange(0,len(item_list))]
 
 
 def create_item_with_correct_classification(world: PBRWorld, name: str) -> PBRItem:

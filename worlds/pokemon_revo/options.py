@@ -11,6 +11,7 @@ class DeathLink(DeathLinkBase):
 
     This can be changed mid-game by using the /death_link command in the client.
     """
+    display_name = "Death Link"
 
 class DeathLinkMode(Choice):
     """

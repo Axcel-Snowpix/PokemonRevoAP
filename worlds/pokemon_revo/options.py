@@ -160,7 +160,7 @@ class StartingRentalPass(Choice):
 
 class Battlesanity(Toggle):
     """
-    Adds checks for winning each battle in a Colosseum.
+    Adds checks for winning each individual battle in a given Colosseum.
     """
     display_name = "Battlesanity"
 
@@ -234,7 +234,7 @@ class StatDropTrapWeight(Range):
 class MetronomeTrapWeight(Range):
     """
     Determines the weighted chance of Metronome Traps being chosen when adding traps to the item pool.
-    These will replace all of the moves of one of your currently sent out Pokémon with Metronome for a single turn.
+    These will force one of your currently sent out Pokémon to use Metronome for a single turn.
     """
     display_name = "Metronome Trap Weight"
     range_start = 0

@@ -1124,6 +1124,7 @@ async def check_death(ctx: PBRContext) -> None:
             if not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
     else:
+        ctx.has_send_death = False
         ctx.has_got_pkmn_faint_data = False
         ctx.deathlink_pkmn_idx = 0
         ctx.pkmn_faint_status.clear()

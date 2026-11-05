@@ -142,6 +142,10 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
+                self.ctx.trigger_death = False
+                self.ctx.has_got_pkmn_faint_data = False
+                self.ctx.deathlink_pkmn_idx = 0
+                self.ctx.pkmn_faint_status.clear()
                 setting = not f"DeathLink{self.ctx.death_link_group}" in self.ctx.tags
                 if setting:
                     logger.info("Death Link enabled.")
@@ -162,6 +166,10 @@ class PBRCommandProcessor(SuperCommandProcessor):
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
                 if not self.ctx.has_send_death:
+                    self.ctx.trigger_death = False
+                    self.ctx.has_got_pkmn_faint_data = False
+                    self.ctx.deathlink_pkmn_idx = 0
+                    self.ctx.pkmn_faint_status.clear()
                     setting = int(not bool(self.ctx.death_link_mode) == 1)
                     if setting == 1:
                         logger.info("Set Death Link Mode to Pokémon Faint")
@@ -201,6 +209,10 @@ class PBRCommandProcessor(SuperCommandProcessor):
         """
         if isinstance(self.ctx, PBRContext):
             if self.ctx.slot is not None:
+                self.ctx.pkmn_hp.clear()
+                self.ctx.has_got_pkmn_dmg_data = False
+                self.ctx.dmglink_pkmn_idx = 0
+                self.ctx.damage_points = 0
                 setting = not f"SharedDamage{self.ctx.damage_link_group}" in self.ctx.tags
                 if setting:
                     logger.info("Damage Link enabled.")
@@ -245,6 +257,9 @@ class PBRContext(SuperContext):
     items_handling: int = 0b111
     slot_data = dict[str, Any]
     colosseums_cleared: list = []
+    has_got_pkmn_faint_data: bool = False
+    pkmn_faint_status: list = []
+    deathlink_pkmn_idx: int = 0
     has_got_pkmn_dmg_data: bool = False
     dmglink_pkmn_idx: int = 0
     pkmn_hp: list = []
@@ -389,10 +404,11 @@ class PBRContext(SuperContext):
 
         :param data: The data associated with the DamageLink event.
         """
-        self.last_damage_link = max(data["time"], self.last_damage_link)
-        sender = data.get("source", "")
-        if sender == self.player_names[self.slot]:
+        sender_slot = data.get("source", "")
+        sender_uuid = data.get("uuid", "")
+        if sender_slot == self.player_names[self.slot] and sender_uuid == Utils.get_unique_identifier():
             return
+        self.last_damage_link = max(data["time"], self.last_damage_link)
         damage = data.get("damage_points", 0)
         text = data.get("cause", "")
         if text:
@@ -423,11 +439,11 @@ class PBRContext(SuperContext):
             await self.send_msgs([{
                 "cmd": "Bounce", "tags": [f"SharedDamage{self.damage_link_group}"],
                 "data": {
-                "time": time.time(),
-                "uuid": Utils.get_unique_identifier(),
-                "source": self.player_names[self.slot],
-                "damage_points": damage,
-                "cause": damage_text
+                    "time": time.time(),
+                    "uuid": Utils.get_unique_identifier(),
+                    "source": self.player_names[self.slot],
+                    "damage_points": damage,
+                    "cause": damage_text
                 },
             }])
 
@@ -559,6 +575,7 @@ async def give_death(ctx: PBRContext) -> None:
         and field_data_addr != 0
         and party_data_addr != 0
         and ctx.trigger_death
+        and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
         field_data_addr = dme.read_word(pointer_addr + 0x30)
         if ctx.death_link_mode == 0:
@@ -588,6 +605,12 @@ async def give_death(ctx: PBRContext) -> None:
             pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
             pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
             pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
+            if ctx.has_got_pkmn_faint_data:
+                ctx.pkmn_faint_status[pkmn_party_idx] = True
+            if ctx.has_got_pkmn_dmg_data:
+                ctx.pkmn_hp[pkmn_party_idx] = 0
+            ctx.has_send_death = False
+            ctx.can_send_damagelink = True
             # Set Pokémon's HP to 0
             dme.write_word(field_data_addr + 0x2d8c + pkmn_offset, 0x0)
             write_short(pkmn_party_data + 0x8e, 0x0)
@@ -603,9 +626,6 @@ async def give_death(ctx: PBRContext) -> None:
             dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x1, 1)
             dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x2, 1)
             dme.write_byte(field_data_addr + 0x2d6c + pkmn_offset + 0x3, 1)
-            if f"SharedDamage{ctx.damage_link_group}" in ctx.tags:
-                ctx.pkmn_hp[pkmn_party_idx] = 0
-            ctx.can_send_damagelink = True
             # Wait for turn to start.
             while (
                 dme.read_byte(field_data_addr) < 0xd
@@ -657,6 +677,7 @@ async def give_damage(ctx: PBRContext) -> None:
         and field_data_addr != 0
         and party_data_addr != 0
         and ctx.damage_points > 0
+        and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
         damage = ctx.damage_points
         # Check if player is in a Single Battle or Double Battle.
@@ -840,6 +861,7 @@ async def battle_item_queue(ctx: PBRContext) -> None:
         and field_data_addr != 0
         and party_data_addr != 0
         and len(ctx.battle_item_queue) > 0
+        and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
         item = ctx.battle_item_queue[0]
         field_data_addr = dme.read_word(pointer_addr + 0x30)
@@ -1082,39 +1104,27 @@ async def check_death(ctx: PBRContext) -> None:
             elif not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
                 ctx.has_send_death = False
         else:
-            # Check if player is in a Single Battle or Double Battle.
-            battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
-            check_pokemon_1 = True
-            check_pokemon_2 = True
-            pokemon_1_hp = dme.read_word(field_data_addr + 0x2d8c)
-            pokemon_1_name = dme.read_bytes(field_data_addr + 0x2d76, 22)
-            pokemon_1_name = decode_text(pokemon_1_name, 11)
-            if battle_style == 1:
-                pokemon_2_hp = dme.read_word(field_data_addr + 0x2d8c + 0x180)
-                pokemon_2_name = dme.read_bytes(field_data_addr + 0x2d76 + 0x180, 22)
-                pokemon_2_name = decode_text(pokemon_2_name, 11)
-                # Stop checking a slot's HP if there is no Pokémon there. (Player only has 1 Pokémon left.)
-                if pokemon_alive == 1:
-                    if pokemon_1_hp <= 0:
-                        check_pokemon_1 = False
-                    else:
-                        check_pokemon_2 = False
-                if pokemon_2_hp <= 0 and check_pokemon_2:
-                    if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
-                        ctx.has_send_death = True
-                        await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_2_name} fainted!")
-                elif (
-                    (pokemon_1_hp > 0 or not check_pokemon_1)
-                    and not battle_lost
-                    and dme.read_word(field_data_addr + 0x8) != 0x2b
-                ):
-                    ctx.has_send_death = False
-            if pokemon_1_hp <= 0 and check_pokemon_1:
-                if not ctx.has_send_death and time.time() >= ctx.last_death_link + 3:
-                    ctx.has_send_death = True
-                    await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pokemon_1_name} fainted!")
-            elif battle_style == 0 and not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
-                ctx.has_send_death = False
+            if time.time() >= ctx.last_death_link + 0.5:
+                if ctx.has_got_pkmn_faint_data:
+                    pokemon_data_addr = party_data_addr + ctx.deathlink_pkmn_idx * 0xa4 + 0x8
+                    new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
+                    if new_pkmn_hp <= 0:
+                        pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMM_SIZE))
+                        ctx.pkmn_faint_status[ctx.deathlink_pkmn_idx] = True
+                        await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pkmn.nickname} fainted!")
+                    ctx.deathlink_pkmn_idx += 1
+                    if ctx.deathlink_pkmn_idx >= party_size:
+                        ctx.deathlink_pkmn_idx = 0
+                else:
+                    ctx.has_got_pkmn_faint_data = True
+                    for i in range(0,party_size):
+                        pokemon_data_addr = party_data_addr + i * 0xa4 + 0x8
+                        ctx.pkmn_faint_status.append(bool(read_short(pokemon_data_addr + 0x8e) <= 0))
+                    ctx.deathlink_pkmn_idx = 0
+    else:
+        ctx.has_got_pkmn_faint_data = False
+        ctx.deathlink_pkmn_idx = 0
+        ctx.pkmn_faint_status.clear()
 
 
 async def check_damage(ctx: PBRContext) -> None:
@@ -1153,6 +1163,7 @@ async def check_damage(ctx: PBRContext) -> None:
                 ctx.dmglink_pkmn_idx = 0
     else:
         ctx.has_got_pkmn_dmg_data = False
+        ctx.dmglink_pkmn_idx = 0
         ctx.pkmn_hp.clear()
 
 

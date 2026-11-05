@@ -1108,7 +1108,7 @@ async def check_death(ctx: PBRContext) -> None:
                 if ctx.has_got_pkmn_faint_data:
                     pokemon_data_addr = party_data_addr + ctx.deathlink_pkmn_idx * 0xa4 + 0x8
                     new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
-                    if new_pkmn_hp <= 0:
+                    if new_pkmn_hp <= 0 and not ctx.pkmn_faint_status[ctx.deathlink_pkmn_idx]:
                         pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMM_SIZE))
                         ctx.pkmn_faint_status[ctx.deathlink_pkmn_idx] = True
                         await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pkmn.nickname} fainted!")
@@ -1121,6 +1121,8 @@ async def check_death(ctx: PBRContext) -> None:
                         pokemon_data_addr = party_data_addr + i * 0xa4 + 0x8
                         ctx.pkmn_faint_status.append(bool(read_short(pokemon_data_addr + 0x8e) <= 0))
                     ctx.deathlink_pkmn_idx = 0
+            if not battle_lost and dme.read_word(field_data_addr + 0x8) != 0x2b:
+                ctx.has_send_death = False
     else:
         ctx.has_got_pkmn_faint_data = False
         ctx.deathlink_pkmn_idx = 0

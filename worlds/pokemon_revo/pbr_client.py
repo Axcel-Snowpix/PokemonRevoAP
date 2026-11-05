@@ -3,6 +3,8 @@ import traceback
 import json
 import time
 import random
+import zipfile
+from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -1313,11 +1315,17 @@ def main(*args: str) -> None:
         world_type_path = Path(world_type.__file__)
         for worlds_path in worlds_paths:
             if world_type_path.is_relative_to(worlds_path):
-                world_root = worlds_path / world_type_path.relative_to(worlds_path).parents[0]
-                manifest_path = world_root / "archipelago.json"
+                if ".apworld" in str(world_type_path):
+                    world_root = worlds_path / world_type_path.relative_to(worlds_path).parents[1]
+                    data = world_root.read_bytes()
+                    with zipfile.ZipFile(BytesIO(data), mode="r") as zf:
+                        manifest = json.loads(zf.read("pokemon_revo/archipelago.json"))
+                else:
+                    world_root = worlds_path / world_type_path.relative_to(worlds_path).parents[0]
+                    manifest_path = world_root / "archipelago.json"
+                    with manifest_path.open("r", encoding="utf-8") as file:
+                        manifest = json.load(file)
                 break
-        with manifest_path.open("r", encoding="utf-8") as file:
-            manifest = json.load(file)
         logger.info(f"Pokémon Battle Revolution APWorld Version: {manifest["world_version"]}")
 
         ctx.dolphin_sync_task = asyncio.create_task(dolphin_sync_task(ctx), name="DolphinSync")

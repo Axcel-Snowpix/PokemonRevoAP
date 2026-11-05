@@ -390,6 +390,9 @@ class PBRContext(SuperContext):
         :param data: The data associated with the DamageLink event.
         """
         self.last_damage_link = max(data["time"], self.last_damage_link)
+        sender = data.get("source", "")
+        if sender == self.player_names[self.slot]:
+            return
         damage = data.get("damage_points", 0)
         text = data.get("cause", "")
         if text:

@@ -159,7 +159,7 @@ class StartingRentalPass(Choice):
     option_natalie = 5
     default = "random"
 
-class Battlesanity(Toggle):
+class Battlesanity(DefaultOnToggle):
     """
     Adds checks for winning each individual battle in a given Colosseum.
     """

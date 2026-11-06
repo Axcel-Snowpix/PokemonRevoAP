@@ -698,6 +698,8 @@ async def give_damage(ctx: PBRContext) -> None:
         # Deal the damage.
         pkmn_hp = dme.read_word(field_data_addr + 0x2d8c + pkmn_offset)
         pkmn_hp = max(pkmn_hp - damage, 0)
+        if len(ctx.pkmn_hp) > pkmn_party_idx:
+            ctx.pkmn_hp[pkmn_party_idx] = pkmn_hp
         dme.write_word(field_data_addr + 0x2d8c + pkmn_offset, pkmn_hp)
         write_short(pkmn_party_data + 0x8e, pkmn_hp)
         if battle_style == 1:
@@ -745,8 +747,6 @@ async def give_damage(ctx: PBRContext) -> None:
             if dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx) == pkmn_party_idx:
                 dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
                 dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
-        if len(ctx.pkmn_hp) > (pkmn_party_idx + 1):
-            ctx.pkmn_hp[pkmn_party_idx] = pkmn_hp
         ctx.can_send_damagelink = True
         ctx.damage_points -= damage
 

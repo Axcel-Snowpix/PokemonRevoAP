@@ -562,18 +562,25 @@ async def give_death(ctx: PBRContext) -> None:
 
     :param ctx: The Pokémon Battle Revolution client context
     """
-    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
-    if pointer_addr != 0:
-        field_data_addr = dme.read_word(pointer_addr + 0x30)
-        party_data_addr = dme.read_word(pointer_addr + 0x68)
-    else:
-        field_data_addr = 0
-        party_data_addr = 0
+    is_in_battle = False
+    field_data_addr = 0
+    party_data_addr = 0
+    pointer_addr = dme.read_word(0x806288C4)
+    if pointer_addr >= 0x80000000 and pointer_addr < 0x817fffff:
+        pointer_addr = dme.read_word(dme.read_word(pointer_addr + 0x14) + 0x1c)
+        if pointer_addr >= 0x90000000 and pointer_addr < 0x933fffff:
+            field_data_addr = dme.read_word(pointer_addr + 0x30)
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
+            is_in_battle = bool(
+                field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+                and dme.read_byte(field_data_addr) > 0x0
+            )
     if (
         check_correct_save(ctx)
         and dme.read_word(0x806288C4) != 0
-        and field_data_addr != 0
-        and party_data_addr != 0
+        and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+        and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
+        and is_in_battle
         and ctx.trigger_death
         and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
@@ -664,18 +671,25 @@ async def give_damage(ctx: PBRContext) -> None:
 
     :param damage: The amount of damage to deal.
     """
-    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
-    if pointer_addr != 0:
-        field_data_addr = dme.read_word(pointer_addr + 0x30)
-        party_data_addr = dme.read_word(pointer_addr + 0x68)
-    else:
-        field_data_addr = 0
-        party_data_addr = 0
+    is_in_battle = False
+    field_data_addr = 0
+    party_data_addr = 0
+    pointer_addr = dme.read_word(0x806288C4)
+    if pointer_addr >= 0x80000000 and pointer_addr < 0x817fffff:
+        pointer_addr = dme.read_word(dme.read_word(pointer_addr + 0x14) + 0x1c)
+        if pointer_addr >= 0x90000000 and pointer_addr < 0x933fffff:
+            field_data_addr = dme.read_word(pointer_addr + 0x30)
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
+            is_in_battle = bool(
+                field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+                and dme.read_byte(field_data_addr) > 0x0
+            )
     if (
         check_correct_save(ctx)
         and dme.read_word(0x806288C4) != 0
-        and field_data_addr != 0
-        and party_data_addr != 0
+        and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+        and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
+        and is_in_battle
         and ctx.damage_points > 0
         and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
@@ -848,18 +862,25 @@ async def battle_item_queue(ctx: PBRContext) -> None:
 
     :param ctx: Pokémon Battle Revolution client context.  
     """
-    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
-    if pointer_addr != 0:
-        field_data_addr = dme.read_word(pointer_addr + 0x30)
-        party_data_addr = dme.read_word(pointer_addr + 0x68)
-    else:
-        field_data_addr = 0
-        party_data_addr = 0
+    is_in_battle = False
+    field_data_addr = 0
+    party_data_addr = 0
+    pointer_addr = dme.read_word(0x806288C4)
+    if pointer_addr >= 0x80000000 and pointer_addr < 0x817fffff:
+        pointer_addr = dme.read_word(dme.read_word(pointer_addr + 0x14) + 0x1c)
+        if pointer_addr >= 0x90000000 and pointer_addr < 0x933fffff:
+            field_data_addr = dme.read_word(pointer_addr + 0x30)
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
+            is_in_battle = bool(
+                field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+                and dme.read_byte(field_data_addr) > 0x0
+            )
     if (
         check_correct_save(ctx)
         and dme.read_word(0x806288C4) != 0
-        and field_data_addr != 0
-        and party_data_addr != 0
+        and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+        and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
+        and is_in_battle
         and len(ctx.battle_item_queue) > 0
         and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
@@ -1071,18 +1092,25 @@ async def check_death(ctx: PBRContext) -> None:
     """
     Check for if a Death Link should be sent.
     """
-    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
-    if pointer_addr != 0:
-        field_data_addr = dme.read_word(pointer_addr + 0x30)
-        party_data_addr = dme.read_word(pointer_addr + 0x68)
-    else:
-        field_data_addr = 0
-        party_data_addr = 0
+    is_in_battle = False
+    field_data_addr = 0
+    party_data_addr = 0
+    pointer_addr = dme.read_word(0x806288C4)
+    if pointer_addr >= 0x80000000 and pointer_addr < 0x817fffff:
+        pointer_addr = dme.read_word(dme.read_word(pointer_addr + 0x14) + 0x1c)
+        if pointer_addr >= 0x90000000 and pointer_addr < 0x933fffff:
+            field_data_addr = dme.read_word(pointer_addr + 0x30)
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
+            is_in_battle = bool(
+                field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+                and dme.read_byte(field_data_addr) > 0x0
+            )
     if (
         check_correct_save(ctx)
         and dme.read_word(0x806288C4) != 0
-        and field_data_addr != 0
-        and party_data_addr != 0
+        and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+        and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
+        and is_in_battle
     ):
         battle_lost = bool(
             (dme.read_byte(pointer_addr + 0x23e4) >> 1) & 0x1
@@ -1134,15 +1162,25 @@ async def check_damage(ctx: PBRContext) -> None:
     """
     Check for if Damage Links should be sent, and how much damage to send.
     """
-    pointer_addr = dme.read_word(dme.read_word(dme.read_word(0x806288C4) + 0x14) + 0x1c)
-    if pointer_addr != 0:
-        party_data_addr = dme.read_word(pointer_addr + 0x68)
-    else:
-        party_data_addr = 0
+    is_in_battle = False
+    field_data_addr = 0
+    party_data_addr = 0
+    pointer_addr = dme.read_word(0x806288C4)
+    if pointer_addr >= 0x80000000 and pointer_addr < 0x817fffff:
+        pointer_addr = dme.read_word(dme.read_word(pointer_addr + 0x14) + 0x1c)
+        if pointer_addr >= 0x90000000 and pointer_addr < 0x933fffff:
+            field_data_addr = dme.read_word(pointer_addr + 0x30)
+            party_data_addr = dme.read_word(pointer_addr + 0x68)
+            is_in_battle = bool(
+                field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+                and dme.read_byte(field_data_addr) > 0x0
+            )
     if (
         check_correct_save(ctx)
         and dme.read_word(0x806288C4) != 0
-        and party_data_addr != 0
+        and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
+        and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
+        and is_in_battle
     ):
         if ctx.can_send_damagelink and time.time() >= ctx.last_damage_link + 0.5:
             party_size = dme.read_word(party_data_addr + 0x4)

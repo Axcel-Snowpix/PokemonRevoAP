@@ -105,6 +105,7 @@ PKMM_SIZE = 0x88
 PKMN_BOXES_OFFSET = 0x5F8
 
 # Data Storage Keys
+AP_COLOSSEUMS_CLEARED_KEY = "pbr_colosseums_cleared_%i"
 AP_ITEM_QUEUE_KEY = "pbr_battle_item_queue_%i"
 AP_ITEM_QUEUE_IDXS_KEY = "pbr_battle_item_queue_idxs_%i"
 AP_DEATH_LINK_KEY = "pbr_death_link_%i"
@@ -297,6 +298,18 @@ class PBRContext(SuperContext):
 
         """
         self.auth = None
+        self.has_got_pkmn_faint_data = False
+        self.pkmn_faint_status.clear()
+        self.deathlink_pkmn_idx = 0
+        self.has_got_pkmn_dmg_data = False
+        self.pkmn_hp.clear()
+        self.dmglink_pkmn_idx = 0
+        self.trigger_death = False
+        self.damage_points = 0
+        self.battle_item_queue.clear()
+        self.battle_item_queue_idxs.clear()
+        self.colosseums_cleared.clear()
+        self.correct_save = False
         await super().disconnect(allow_autoreconnect)
 
     async def server_auth(self, password_requested: bool = False) -> None:
@@ -327,6 +340,7 @@ class PBRContext(SuperContext):
         if cmd == "Connected":
             self.slot_data = args["slot_data"]
             keys = [
+                AP_COLOSSEUMS_CLEARED_KEY % self.slot,
                 AP_ITEM_QUEUE_KEY % self.slot,
                 AP_ITEM_QUEUE_IDXS_KEY % self.slot,
                 AP_DEATH_LINK_GROUP_KEY % self.slot,
@@ -341,6 +355,7 @@ class PBRContext(SuperContext):
             requested_keys_dict = args["keys"]
             if self.slot is not None:
                 keys = {
+                    AP_COLOSSEUMS_CLEARED_KEY % self.slot: {"slot_data": None},
                     AP_ITEM_QUEUE_KEY % self.slot: {"slot_data": None},
                     AP_ITEM_QUEUE_IDXS_KEY % self.slot: {"slot_data": None},
                     AP_DEATH_LINK_GROUP_KEY % self.slot: {"slot_data": self.slot_data["death_link_group"]},
@@ -368,7 +383,9 @@ class PBRContext(SuperContext):
                             else:
                                 Utils.async_start(self.update_server_variable(key, []))
                         else:
-                            if key == AP_ITEM_QUEUE_KEY % self.slot:
+                            if key == AP_COLOSSEUMS_CLEARED_KEY % self.slot:
+                                self.colosseums_cleared = value
+                            elif key == AP_ITEM_QUEUE_KEY % self.slot:
                                 self.battle_item_queue = value
                             elif key == AP_ITEM_QUEUE_IDXS_KEY % self.slot:
                                 self.battle_item_queue_idxs = value
@@ -1078,6 +1095,8 @@ async def check_stargazer_unlock(ctx: PBRContext) -> None:
                         colosseum_clears_value = dme.read_byte(save_file_address + data.offset)
                         if colosseum_clears_value > 0x0 and data.region not in ctx.colosseums_cleared:
                             ctx.colosseums_cleared.append(data.region)
+                            key = AP_COLOSSEUMS_CLEARED_KEY % ctx.slot
+                            Utils.async_start(ctx.update_server_variable(key, ctx.colosseums_cleared))
                 if len(ctx.colosseums_cleared) >= ctx.slot_data["colosseum_clear_count"]:
                     colosseum_clear_req = True
             else:

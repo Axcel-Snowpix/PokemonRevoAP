@@ -74,6 +74,9 @@ BLOCK_SIZE = 0x20
 @dataclass
 class Gen4Pokemon:
     personality_value: int = 0 # int
+    # 0-1: skip checksum
+    #   2: bad egg
+    #  13: pbr bad egg *(see note 1)
     flagsBase: int = 0 # half
     checksum: int = 0 # half
 
@@ -363,3 +366,7 @@ def decode_text(text: bytes, text_length: int) -> str:
             break
         decoded_text += PBR_ENCODING_INVERSE[char]
     return decoded_text
+
+
+# Note 1: PBR also double checks the validity of Pokemon copied from games;
+# however, instead of actually setting the bad_egg flag, it sets bit 0xD.

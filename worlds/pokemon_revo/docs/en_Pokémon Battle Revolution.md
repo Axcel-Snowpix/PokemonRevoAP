@@ -28,8 +28,7 @@ The goal is to beat Stargazer Colosseum, which will unlocked through the followi
 
 ## When the player receives an item, what happens?
 
-Colosseums and Rental Passes will be automatically unlocked, while Poké Coupons and Pokétopia Badges will be instantly added onto the amount you already have.
-Mid-Battle items will be put in a queue and used up whenever possible.
+Colosseums and Rental Passes will be automatically unlocked, while Poké Coupons and Pokétopia Badges will be instantly added onto the amount you already have. Mid-Battle items will be put in a queue and used up whenever possible.  
 In the case of Rental Passes, you may need to exit the menu for them to properly appear.
 
 ## Can I play this offline?

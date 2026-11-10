@@ -27,7 +27,7 @@ There's a few ways to install the APWorld
 ## Installing disc-riider-py
 
 Open the Archipelago Launcher and search for the `Browse Files` option. Click it, and it'll open the folder containing your Archipelago installation.  
-Then, take the `disc-riider-py.zip` file you downloaded, put it in your Archipelago installation's `lib` folder and extract its contents.  
+Then, take the disc-riider-py zip file you downloaded, put it in your Archipelago installation's `lib` folder and extract its contents.  
 Make sure the `disc-riider-py` folder is in the `lib` folder, and not nested in any other sub-folders.
 
 ## Options and Generating

@@ -66,24 +66,26 @@ ITEM_TABLE: dict[str, PBRItemData] = {
     "X Sp. Atk": PBRItemData("Stat Changes", ItemClassification.filler, 28, [0x4, 0x1]),
     "X Sp. Def": PBRItemData("Stat Changes", ItemClassification.filler, 29, [0x5, 0x1]),
     "X Accuracy": PBRItemData("Stat Changes", ItemClassification.filler, 30, [0x6, 0x1]),
+    "X Evasion": PBRItemData("Stat Changes", ItemClassification.filler, 31, [0x7, 0x1]),
 
-    "+1 Perfect Point": PBRItemData("Perfect Points", ItemClassification.filler, 31, [0x1]),
+    "+1 Perfect Point": PBRItemData("Perfect Points", ItemClassification.filler, 32, [0x1]),
 
-    "Poison Trap": PBRItemData("Status Conditions", ItemClassification.trap, 32, [3]),
-    "Burn Trap": PBRItemData("Status Conditions", ItemClassification.trap, 33, [4]),
-    "Freeze Trap": PBRItemData("Status Conditions", ItemClassification.trap, 34, [5]),
-    "Paralysis Trap": PBRItemData("Status Conditions", ItemClassification.trap, 35, [6]),
-    "Toxic Trap": PBRItemData("Status Conditions", ItemClassification.trap, 36, [7]),
-    "Sleep Trap": PBRItemData("Status Conditions", ItemClassification.trap, 37),
+    "Poison Trap": PBRItemData("Status Conditions", ItemClassification.trap, 33, [3]),
+    "Burn Trap": PBRItemData("Status Conditions", ItemClassification.trap, 34, [4]),
+    "Freeze Trap": PBRItemData("Status Conditions", ItemClassification.trap, 35, [5]),
+    "Paralysis Trap": PBRItemData("Status Conditions", ItemClassification.trap, 36, [6]),
+    "Toxic Trap": PBRItemData("Status Conditions", ItemClassification.trap, 37, [7]),
+    "Sleep Trap": PBRItemData("Status Conditions", ItemClassification.trap, 38),
 
-    "Attack Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 38, [0x1, -0x1]),
-    "Defense Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 39, [0x2, -0x1]),
-    "Speed Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 40, [0x3, -0x1]),
-    "Sp. Atk Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 41, [0x4, -0x1]),
-    "Sp. Def Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 42, [0x5, -0x1]),
-    "Evasion Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 43, [0x7, -0x1]),
+    "Attack Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 39, [0x1, -0x1]),
+    "Defense Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 40, [0x2, -0x1]),
+    "Speed Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 41, [0x3, -0x1]),
+    "Sp. Atk Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 42, [0x4, -0x1]),
+    "Sp. Def Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 43, [0x5, -0x1]),
+    "Accuracy Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 44, [0x6, -0x1]),
+    "Evasion Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 45, [0x7, -0x1]),
 
-    "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 44, [0x76, 0xA]),
+    "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 46, [0x76, 0xA]),
 }
 
 
@@ -120,12 +122,16 @@ def get_random_filler_item_name(world: PBRWorld) -> str:
     group = item_pool[world.random.randrange(0,len(item_pool))]
     item_list = []
     for item, data in ITEM_TABLE.items():
-        if data.group == group and data.classification == classification:
+        if (
+            data.group == group 
+            and data.classification == classification
+            and (
+                world.options.allow_accuracy_drop_trap
+                or item != "Accuracy Drop Trap"
+            )
+        ):
+            item_list.append(item)
             if item in increased_weight_items:
-                item_list.append(item)
-                item_list.append(item)
-                item_list.append(item)
-            else:
                 item_list.append(item)
     return item_list[world.random.randrange(0,len(item_list))]
 
@@ -228,6 +234,9 @@ item_name_groups = {
     "Colosseums": set(),
     "Rental Passes": set(),
     "Poké Coupons": set(),
+    "Heals": set(),
+    "Stat Changes": set(),
+    "Status Conditions": set(),
 }
 for item, data in ITEM_TABLE.items():
     if data.group in item_name_groups:

@@ -267,7 +267,7 @@ class PBRContext(SuperContext):
     battle_item_queue: list = []
     battle_item_queue_idxs: list = []
     trigger_death: bool = False
-    damage_points: int = 0
+    damage_points: float = 0
     correct_save: bool = False
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
@@ -432,7 +432,7 @@ class PBRContext(SuperContext):
             logger.info(f"DamageLink: {text}")
         else:
             logger.info(f"DamageLink: Received {damage} damage from {data['source']}")
-        self.damage_points += int(damage)
+        self.damage_points += float(damage)
 
     async def send_death(self, death_text: str = ""):
         """Helper function to send a deathlink using death_text as the unique death cause string."""
@@ -579,6 +579,8 @@ async def give_death(ctx: PBRContext) -> None:
 
     :param ctx: The Pokémon Battle Revolution client context
     """
+    if not check_correct_save(ctx):
+        return
     is_in_battle = False
     field_data_addr = 0
     party_data_addr = 0
@@ -593,14 +595,14 @@ async def give_death(ctx: PBRContext) -> None:
                 and dme.read_byte(field_data_addr) > 0x0
             )
     if (
-        check_correct_save(ctx)
-        and dme.read_word(0x806288C4) != 0
+        dme.read_word(0x806288C4) != 0
         and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
         and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
         and is_in_battle
         and ctx.trigger_death
         and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
+        ctx.trigger_death = False
         field_data_addr = dme.read_word(pointer_addr + 0x30)
         if ctx.death_link_mode == 0:
             battle_outcome_addr = pointer_addr + 0x23e4
@@ -611,7 +613,7 @@ async def give_death(ctx: PBRContext) -> None:
         else:
             ctx.can_send_damagelink = False
             # Check if player is in a Single Battle or Double Battle.
-            battle_style = (dme.read_word(dme.read_word(pointer_addr + 0x2c) >> 1)) & 1
+            battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
             party_data_addr = dme.read_word(pointer_addr + 0x68)
             ctx.has_send_death = True
             if battle_style == 0:
@@ -679,6 +681,10 @@ async def give_death(ctx: PBRContext) -> None:
             if dme.read_byte(field_data_addr + 0x219c + pkmn_field_idx) == pkmn_party_idx:
                 dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
                 dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
+    elif (
+        not (field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff)
+        and not (party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff)
+    ):
         ctx.trigger_death = False
 
 
@@ -688,6 +694,8 @@ async def give_damage(ctx: PBRContext) -> None:
 
     :param damage: The amount of damage to deal.
     """
+    if not check_correct_save(ctx):
+        return
     is_in_battle = False
     field_data_addr = 0
     party_data_addr = 0
@@ -702,15 +710,14 @@ async def give_damage(ctx: PBRContext) -> None:
                 and dme.read_byte(field_data_addr) > 0x0
             )
     if (
-        check_correct_save(ctx)
-        and dme.read_word(0x806288C4) != 0
+        dme.read_word(0x806288C4) != 0
         and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
         and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
         and is_in_battle
-        and ctx.damage_points > 0
+        and int(ctx.damage_points) > 0
         and dme.read_word(field_data_addr + 0x8) != 0x2b
     ):
-        damage = ctx.damage_points
+        damage = int(ctx.damage_points)
         # Check if player is in a Single Battle or Double Battle.
         battle_style = (dme.read_word(pointer_addr + 0x2c) >> 1) & 1
         ctx.can_send_damagelink = False
@@ -779,7 +786,12 @@ async def give_damage(ctx: PBRContext) -> None:
                 dme.write_bytes(field_data_addr + 0x2d4c + pkmn_offset, pkmn_field_moves)
                 dme.write_word(field_data_addr + 0x2d6c + pkmn_offset, pkmn_field_pp)
         ctx.can_send_damagelink = True
-        ctx.damage_points -= damage
+        ctx.damage_points -= float(damage)
+    elif (
+        not (field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff)
+        and not (party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff)
+    ):
+        ctx.damage_points = 0
 
 
 def find_save_file_address():
@@ -879,6 +891,8 @@ async def battle_item_queue(ctx: PBRContext) -> None:
 
     :param ctx: Pokémon Battle Revolution client context.  
     """
+    if not check_correct_save(ctx):
+        return
     is_in_battle = False
     field_data_addr = 0
     party_data_addr = 0
@@ -893,8 +907,7 @@ async def battle_item_queue(ctx: PBRContext) -> None:
                 and dme.read_byte(field_data_addr) > 0x0
             )
     if (
-        check_correct_save(ctx)
-        and dme.read_word(0x806288C4) != 0
+        dme.read_word(0x806288C4) != 0
         and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
         and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
         and is_in_battle
@@ -1111,6 +1124,8 @@ async def check_death(ctx: PBRContext) -> None:
     """
     Check for if a Death Link should be sent.
     """
+    if not check_correct_save(ctx):
+        return
     is_in_battle = False
     field_data_addr = 0
     party_data_addr = 0
@@ -1125,8 +1140,7 @@ async def check_death(ctx: PBRContext) -> None:
                 and dme.read_byte(field_data_addr) > 0x0
             )
     if (
-        check_correct_save(ctx)
-        and dme.read_word(0x806288C4) != 0
+        dme.read_word(0x806288C4) != 0
         and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
         and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
         and is_in_battle
@@ -1181,6 +1195,8 @@ async def check_damage(ctx: PBRContext) -> None:
     """
     Check for if Damage Links should be sent, and how much damage to send.
     """
+    if not check_correct_save(ctx):
+        return
     is_in_battle = False
     field_data_addr = 0
     party_data_addr = 0
@@ -1195,8 +1211,7 @@ async def check_damage(ctx: PBRContext) -> None:
                 and dme.read_byte(field_data_addr) > 0x0
             )
     if (
-        check_correct_save(ctx)
-        and dme.read_word(0x806288C4) != 0
+        dme.read_word(0x806288C4) != 0
         and field_data_addr >= 0x90000000 and field_data_addr < 0x933fffff
         and party_data_addr >= 0x90000000 and party_data_addr < 0x933fffff
         and is_in_battle

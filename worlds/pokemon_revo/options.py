@@ -73,6 +73,7 @@ class GoalUnlockMethod(Choice):
 class RequiredBadgeAmount(Range):
     """
     The number of Pokétopia Badges required to unlock Stargazer Colosseum.
+    This option may be decreased if there aren't enough locations.
     This option only matters if Goal Unlock Method is set to either Badge Hunt or Both.
     """
     display_name = "Required Badge Amount"
@@ -83,6 +84,7 @@ class RequiredBadgeAmount(Range):
 class TotalBadgeAmount(Range):
     """
     The total number of Pokétopia Badges in the item pool.
+    This option may be decreased if there aren't enough locations.
     If this option is set to a lower number than Required Badge Amount, then it will be increased to match.
     This option only matters if Goal Unlock Method is set to either Badge Hunt or Both.
     """
@@ -232,6 +234,12 @@ class StatDropTrapWeight(Range):
     range_end = 50
     default = 10
 
+class AllowAccuracyDropTrap(Toggle):
+    """
+    Allows Accuracy Drop Traps to be chosen when adding a stat drop trap to the item pool.
+    """
+    display_name = "Allow Accuracy Drop Trap"
+
 class MetronomeTrapWeight(Range):
     """
     Determines the weighted chance of Metronome Traps being chosen when adding traps to the item pool.
@@ -240,7 +248,7 @@ class MetronomeTrapWeight(Range):
     display_name = "Metronome Trap Weight"
     range_start = 0
     range_end = 50
-    default = 3
+    default = 5
 
 @dataclass
 class PBROptions(PerGameCommonOptions):
@@ -266,6 +274,7 @@ class PBROptions(PerGameCommonOptions):
     trap_percentage_chance: TrapPercentageChance
     status_condition_trap_weight: StatusConditionTrapWeight
     stat_drop_trap_weight: StatDropTrapWeight
+    allow_accuracy_drop_trap: AllowAccuracyDropTrap
     metronome_trap_weight: MetronomeTrapWeight
 
 option_groups = [
@@ -283,6 +292,9 @@ option_groups = [
     ),
     OptionGroup(
         "Trap Options",
-        [TrapPercentageChance, StatusConditionTrapWeight, StatDropTrapWeight, MetronomeTrapWeight],
+        [
+            TrapPercentageChance, StatusConditionTrapWeight, StatDropTrapWeight, AllowAccuracyDropTrap,
+            MetronomeTrapWeight
+        ],
     ),
 ]

@@ -81,7 +81,11 @@ class PBRWorld(World):
         return items.create_item_with_correct_classification(self, name)
 
     def get_filler_item_name(self) -> str:
-        return items.get_random_filler_item_name(self)
+        itempool = []
+        for item in self.multiworld.itempool:
+            if item.player == self.player:
+                itempool.append(item)
+        return items.get_random_filler_item_name(self, itempool)
 
     def generate_output(self, output_directory: str) -> None:
         patch = PBRPatch(player=self.player, player_name=self.player_name)

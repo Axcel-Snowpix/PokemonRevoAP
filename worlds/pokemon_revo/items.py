@@ -6,6 +6,8 @@ from Utils import logging
 
 from BaseClasses import Item, ItemClassification
 
+from .data.pokemon_data import id_to_mon
+
 if TYPE_CHECKING:
     from .world import PBRWorld
 
@@ -86,6 +88,8 @@ ITEM_TABLE: dict[str, PBRItemData] = {
     "Evasion Drop Trap": PBRItemData("Stat Changes", ItemClassification.trap, 45, [0x7, -0x1]),
 
     "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 46, [0x76, 0xA]),
+
+    **{pkmn: PBRItemData("Pokémon", ItemClassification.useful, 47 + i) for i, pkmn in enumerate(id_to_mon.values())}
 }
 
 
@@ -94,40 +98,67 @@ LOOKUP_ID_TO_NAME: dict[int, str] = {
 }
 
 
-def get_random_filler_item_name(world: PBRWorld) -> str:
+def get_random_filler_item_name(world: PBRWorld, itempool) -> str:
     increased_weight_items = [
         "100 Poké Coupons", "200 Poké Coupons", "300 Poké Coupons",
         "Poison Trap", "Burn Trap", "Paralysis Trap"
     ]
     if world.random.randint(0,99) >= world.options.trap_percentage_chance:
-        item_groups = ["Poké Coupons", "Heals", "Stat Changes", "Perfect Points"]
+        item_groups = ["Pokémon", "Poké Coupons", "Heals", "Stat Changes", "Perfect Points"]
         item_weights = [
-            world.options.poke_coupon_weight, world.options.healing_item_weight,
-            world.options.stat_boost_weight, world.options.perfect_point_weight,
+            world.options.pokemon_weight, world.options.poke_coupon_weight,
+            world.options.healing_item_weight, world.options.stat_boost_weight,
+            world.options.perfect_point_weight,
         ]
-        classification = ItemClassification.filler
+        trap = False
     else:
         item_groups = ["Status Conditions", "Stat Changes", "Move Changes"]
         item_weights = [
             world.options.status_condition_trap_weight, world.options.stat_drop_trap_weight,
             world.options.metronome_trap_weight,
         ]
-        classification = ItemClassification.trap
-    item_pool = []
+        trap = True
+    item_group_pool = []
     for i in range(len(item_groups)):
         for _ in range(item_weights[i]):
-            item_pool.append(item_groups[i])
-    if len(item_pool) <= 0:
-        item_pool = item_groups
-    group = item_pool[world.random.randrange(0,len(item_pool))]
+            item_group_pool.append(item_groups[i])
+    if len(item_group_pool) <= 0:
+        item_group_pool = item_groups
+    include_duplicate_mons = False
+    if item_group_pool.count("Pokémon") > 0:
+        has_other_filler = False
+        for i in range(0,len(item_weights)):
+            if item_weights[i] > 0 and i != 0:
+                has_other_filler = True
+        for pkmn in id_to_mon:
+            if pkmn not in itempool:
+                pkmn_available = True
+                break
+        if not pkmn_available:
+            if has_other_filler:
+                for _ in range(0,item_group_pool.count("Pokémon")):
+                    item_group_pool.remove("Pokémon")
+            else:
+                include_duplicate_mons = True
+    group = item_group_pool[world.random.randrange(0,len(item_group_pool))]
     item_list = []
     for item, data in ITEM_TABLE.items():
         if (
             data.group == group 
-            and data.classification == classification
+            and ((
+                trap and data.classification == ItemClassification.trap
+            ) or (
+                not trap and data.classification != ItemClassification.trap
+            )
+            )
             and (
                 world.options.allow_accuracy_drop_trap
                 or item != "Accuracy Drop Trap"
+            )
+            and (
+                world.create_item(item) not in itempool
+                or include_duplicate_mons
+                or group != "Pokémon"
             )
         ):
             item_list.append(item)
@@ -226,7 +257,8 @@ The number of required badges will be decreased to {new_number_of_badges}."""
             world.options.required_badge_amount.value = new_number_of_badges
 
     needed_number_of_filler_items = number_of_unfilled_locations - number_of_items
-    itempool += [world.create_filler() for _ in range(needed_number_of_filler_items)]
+    for _ in range(needed_number_of_filler_items):
+        itempool.append(world.create_item(get_random_filler_item_name(world, itempool)))
 
     world.multiworld.itempool += itempool
 
@@ -237,6 +269,7 @@ item_name_groups = {
     "Heals": set(),
     "Stat Changes": set(),
     "Status Conditions": set(),
+    "Pokémon": set(),
 }
 for item, data in ITEM_TABLE.items():
     if data.group in item_name_groups:

@@ -167,6 +167,17 @@ class Battlesanity(DefaultOnToggle):
     """
     display_name = "Battlesanity"
 
+class PokemonWeight(Range):
+    """
+    Determines the weighted chance of Pokémon being added when filling the item pool.
+    Pokémon will be automatically added to the storage when received.
+    No duplicate species will be added to the item pool, unless all other filler items are set to 0 weight.
+    """
+    display_name = "Pokémon Weight"
+    range_start = 0
+    range_end = 50
+    default = 20
+
 class PokeCouponWeight(Range):
     """
     Determines the weighted chance of Poké Coupons being added when filling the item pool.
@@ -267,6 +278,7 @@ class PBROptions(PerGameCommonOptions):
     randomize_rental_passes: RandomizeRentalPasses
     starting_rental_pass: StartingRentalPass
     battlesanity: Battlesanity
+    pokemon_weight: PokemonWeight
     poke_coupon_weight: PokeCouponWeight
     healing_item_weight: HealingItemWeight
     stat_boost_weight: StatBoostWeight
@@ -288,7 +300,7 @@ option_groups = [
     ),
     OptionGroup(
         "Filler Item Options",
-        [PokeCouponWeight, HealingItemWeight, StatBoostWeight, PerfectPointWeight],
+        [PokemonWeight, PokeCouponWeight, HealingItemWeight, StatBoostWeight, PerfectPointWeight],
     ),
     OptionGroup(
         "Trap Options",

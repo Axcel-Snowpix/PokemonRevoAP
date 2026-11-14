@@ -95,14 +95,20 @@ BATTLE_PASS_OFFSET = 0x134D8
 # Size of Rental/Battle Passes.
 BATTLE_PASS_SIZE = 0x6EC
 
-# Offset for Pokemon on a Battle Pass.
+# Offset for Pokémon on a Battle Pass.
 BATTLE_PASS_PKMN_OFFSET = 0x1FC
 
-# Size of Pokemon Struct
+# Size of Pokémon Struct
 PKMM_SIZE = 0x88
 
-# Offset for Player's Copied Pokemon Boxes
+# Offset for Player's Copied Pokémon Boxes
 PKMN_BOXES_OFFSET = 0x5F8
+
+# Size of a Pokémon Box
+PKMN_BOX_SIZE = 0xFF0
+
+# The expected index for the following Pokémon that should be received.
+PKMN_EXPECTED_IDX_OFFSET = 0x6902D
 
 # Data Storage Keys
 AP_COLOSSEUMS_CLEARED_KEY = "pbr_colosseums_cleared_%i"
@@ -113,6 +119,8 @@ AP_DEATH_LINK_MODE_KEY = "pbr_death_link_mode_%i"
 AP_DEATH_LINK_GROUP_KEY = "pbr_death_link_group_%i"
 AP_DAMAGE_LINK_KEY = "pbr_damage_link_%i"
 AP_DAMAGE_LINK_GROUP_KEY = "pbr_damage_link_group_%i"
+AP_PKMN_QUEUE_KEY = "pbr_pkmn_queue_%i"
+AP_PKMN_QUEUE_IDXS_KEY = "pbr_pkmn_queue_idxs_%i"
 
 
 class PBRCommandProcessor(SuperCommandProcessor):
@@ -269,6 +277,8 @@ class PBRContext(SuperContext):
     trigger_death: bool = False
     damage_points: float = 0
     correct_save: bool = False
+    pkmn_queue: list = []
+    pkmn_queue_idxs: list = []
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         """
@@ -310,6 +320,8 @@ class PBRContext(SuperContext):
         self.battle_item_queue_idxs.clear()
         self.colosseums_cleared.clear()
         self.correct_save = False
+        self.pkmn_queue.clear()
+        self.pkmn_queue_idxs.clear()
         await super().disconnect(allow_autoreconnect)
 
     async def server_auth(self, password_requested: bool = False) -> None:
@@ -348,6 +360,8 @@ class PBRContext(SuperContext):
                 AP_DEATH_LINK_MODE_KEY % self.slot,
                 AP_DAMAGE_LINK_GROUP_KEY % self.slot,
                 AP_DAMAGE_LINK_KEY % self.slot,
+                AP_PKMN_QUEUE_KEY % self.slot,
+                AP_PKMN_QUEUE_IDXS_KEY % self.slot,
             ]
             for key in keys:
                 Utils.async_start(self.send_msgs([{"cmd": "Get", "keys": [key]}]))
@@ -363,6 +377,8 @@ class PBRContext(SuperContext):
                     AP_DEATH_LINK_MODE_KEY % self.slot: {"slot_data": self.slot_data["death_link_mode"]},
                     AP_DAMAGE_LINK_GROUP_KEY % self.slot: {"slot_data": self.slot_data["damage_link_group"]},
                     AP_DAMAGE_LINK_KEY % self.slot: {"slot_data": self.slot_data["damage_link"]},
+                    AP_PKMN_QUEUE_KEY % self.slot: {"slot_data": None},
+                    AP_PKMN_QUEUE_IDXS_KEY % self.slot: {"slot_data": None},
                 }
                 for key, data in keys.items():
                     if key in requested_keys_dict:
@@ -389,6 +405,10 @@ class PBRContext(SuperContext):
                                 self.battle_item_queue = value
                             elif key == AP_ITEM_QUEUE_IDXS_KEY % self.slot:
                                 self.battle_item_queue_idxs = value
+                            elif key == AP_PKMN_QUEUE_KEY % self.slot:
+                                self.pkmn_queue = value
+                            elif key == AP_PKMN_QUEUE_IDXS_KEY % self.slot:
+                                self.pkmn_queue_idxs = value
                             elif key == AP_DEATH_LINK_KEY % self.slot:
                                 Utils.async_start(self.update_death_link(value))
                             elif key == AP_DEATH_LINK_GROUP_KEY % self.slot:
@@ -842,6 +862,16 @@ def _give_item(ctx: PBRContext, item_name: str, index: int) -> bool:
                 current_badge_count += 0x1
                 dme.write_byte(save_file_address + BADGE_COUNT, current_badge_count)
             return True
+        case "Pokémon":
+            expected_idx = read_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET)
+            if index > expected_idx and index not in ctx.pkmn_queue_idxs:
+                pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
+                pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
+                ctx.pkmn_queue.append(item_name)
+                ctx.pkmn_queue_idxs.append(item_name)
+                Utils.async_start(ctx.update_server_variable(pkmn_queue_key, ctx.pkmn_queue))
+                Utils.async_start(ctx.update_server_variable(pkmn_queue_idxs_key, ctx.pkmn_queue_idxs))
+            return True
         case _:
             if index not in ctx.battle_item_queue_idxs:
                 item_queue_key = AP_ITEM_QUEUE_KEY % ctx.slot
@@ -887,7 +917,7 @@ async def give_items(ctx: PBRContext) -> None:
 
 async def battle_item_queue(ctx: PBRContext) -> None:
     """
-    A queue for items that can only be received mid-battle
+    A queue for items that can only be received mid-battle.
 
     :param ctx: Pokémon Battle Revolution client context.  
     """
@@ -1045,6 +1075,44 @@ async def battle_item_queue(ctx: PBRContext) -> None:
         item_queue_idxs_key = AP_ITEM_QUEUE_IDXS_KEY % ctx.slot
         Utils.async_start(ctx.update_server_variable(item_queue_key, ctx.battle_item_queue))
         Utils.async_start(ctx.update_server_variable(item_queue_idxs_key, ctx.battle_item_queue_idxs))
+
+
+async def pkmn_queue(ctx: PBRContext) -> None:
+    """
+    A queue for Pokémon received through items in the multiworld.
+
+    :param ctx: Pokémon Battle Revolution client context.
+    """
+    if not check_correct_save(ctx) or len(ctx.pkmn_queue) == 0:
+        return
+    save_file_address = find_save_file_address()
+    box_idx = 0
+    slot_idx = 0
+    pkmn_slot_offset = 0
+    while box_idx < 18:
+        pkmn_slot_offset = 0x5f8 + PKMN_BOX_SIZE * box_idx + PKMM_SIZE * slot_idx
+        if dme.read_bytes(save_file_address + pkmn_slot_offset, PKMM_SIZE) == 0:
+            break
+        else:
+            pkmn_slot_offset = 0
+            slot_idx += 1
+            if slot_idx > 29:
+                box_idx += 1
+                slot_idx = 0
+    if pkmn_slot_offset == 0:
+        # All boxes are full.
+        return
+    # Insert way of getting the Pokémon's data
+    pkmn = 0
+    dme.write_bytes(save_file_address + pkmn_slot_offset, pkmn)
+    expected_idx = read_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET)
+    write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, max(ctx.pkmn_queue_idxs[0], expected_idx))
+    pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
+    pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
+    ctx.pkmn_queue.pop(0)
+    ctx.pkmn_queue_idxs.pop(0)
+    Utils.async_start(ctx.update_server_variable(pkmn_queue_key, ctx.pkmn_queue))
+    Utils.async_start(ctx.update_server_variable(pkmn_queue_idxs_key, ctx.pkmn_queue_idxs))
 
 
 async def check_locations(ctx: PBRContext) -> None:
@@ -1321,6 +1389,7 @@ async def dolphin_sync_task(ctx: PBRContext) -> None:
                         await give_items(ctx)
                         await check_locations(ctx)
                         await check_stargazer_unlock(ctx)
+                        await pkmn_queue(ctx)
                         await battle_item_queue(ctx)
                     else:
                         sleep_time = 5

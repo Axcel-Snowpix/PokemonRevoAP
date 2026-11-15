@@ -1102,6 +1102,11 @@ async def pkmn_queue(ctx: PBRContext) -> None:
     if pkmn_slot_offset == 0:
         # All boxes are full.
         return
+    pkmn_idx = 0
+    if len(ctx.pkmn_queue_idxs) > 1:
+        for i in range(1,len(ctx.pkmn_queue_idxs)):
+            if ctx.pkmn_queue_idxs[i] < ctx.pkmn_queue_idxs[pkmn_idx]:
+                pkmn_idx = i
     # Insert way of getting the Pokémon's data
     pkmn = 0
     dme.write_bytes(save_file_address + pkmn_slot_offset, pkmn)
@@ -1109,8 +1114,8 @@ async def pkmn_queue(ctx: PBRContext) -> None:
     write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, max(ctx.pkmn_queue_idxs[0], expected_idx))
     pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
     pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
-    ctx.pkmn_queue.pop(0)
-    ctx.pkmn_queue_idxs.pop(0)
+    ctx.pkmn_queue.pop(pkmn_idx)
+    ctx.pkmn_queue_idxs.pop(pkmn_idx)
     Utils.async_start(ctx.update_server_variable(pkmn_queue_key, ctx.pkmn_queue))
     Utils.async_start(ctx.update_server_variable(pkmn_queue_idxs_key, ctx.pkmn_queue_idxs))
 

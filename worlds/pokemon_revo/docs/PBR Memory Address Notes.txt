@@ -43,6 +43,10 @@ Total Battles Byte 1: 0x124EA
 Total Battles Byte 2: 0x124EB
 Total Battles Byte 3: 0x124E4
 
+Trainer ID Byte 1: 0x124E7
+Trainer ID Byte 2: 0x124E0
+Secret ID: 0x124E5
+
 1st Pokémon's Displayed HP: 0x8044e0d6 | Halfword
 2nd Pokémon's Displayed HP: 0x8044e1b2 | Halfword
 3rd Pokémon's Displayed HP: 0x8044e28e | Halfword

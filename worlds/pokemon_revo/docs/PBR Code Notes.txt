@@ -4,6 +4,7 @@ FUN_80138970 unlocks new colosseums, with the use of SetSaveSlotFlag
 It also seems to handle a bunch of other flags
 
 Bit Flag Table IDs
+0x9 = SID & TID
 0xe = Gateway Wins
 0xf = Main Street Wins
 0x10 = Waterfall Wins

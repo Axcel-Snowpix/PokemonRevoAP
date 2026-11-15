@@ -89,7 +89,7 @@ ITEM_TABLE: dict[str, PBRItemData] = {
 
     "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 46, [0x76, 0xA]),
 
-    **{pkmn: PBRItemData("Pokémon", ItemClassification.useful, 47 + i) for i, pkmn in enumerate(id_to_mon.values())}
+    **{pkmn: PBRItemData("Pokémon", ItemClassification.useful, 46 + i) for i, pkmn in enumerate(id_to_mon.values()) if pkmn != '-'}
 }
 
 

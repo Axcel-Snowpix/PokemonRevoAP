@@ -1682,6 +1682,7 @@ move_data = {
 
 # Items - Common 0019
 id_to_item = {
+    0: 'None',
     43: 'Berry Juice',
     135: 'Adamant Orb',
     136: 'Lustrous Orb',
@@ -1835,6 +1836,7 @@ id_to_item = {
 }
 
 item_to_id = {
+    'None' : 0,
     'Berry Juice': 43,
     'Adamant Orb': 135,
     'Lustrous Orb': 136,
@@ -2491,8 +2493,8 @@ pokemon_data = {
     493: {'name': 'Arceus', 'gender': 255, 'hp': 120, 'atk': 120, 'def': 120, 'sp_atk': 120, 'sp_def': 120, 'spd': 120, 'type1': 0, 'type2': 0, 'ability1': 121, 'ability2': 0},
 }
 
-level_up_moves = {
-    0: {},
+level_up_moves: dict[int, set[tuple[int, int]]] = {
+    0: {(1, 0)}, # Needs to be here to allow type without errors. Species 0 does not actually have learnable moves.
     1: {(1, 33), (3, 45), (7, 73), (9, 22), (13, 77), (13, 79), (15, 36), (19, 75), (21, 230), (25, 74), (27, 38), (31, 388), (33, 235), (37, 402)},
     2: {(1, 33), (1, 45), (1, 73), (3, 45), (7, 73), (9, 22), (13, 77), (13, 79), (15, 36), (20, 75), (23, 230), (28, 74), (31, 38), (36, 388), (39, 235), (44, 76)},
     3: {(1, 33), (1, 45), (1, 73), (1, 22), (3, 45), (7, 73), (9, 22), (13, 77), (13, 79), (15, 36), (20, 75), (23, 230), (28, 74), (31, 38), (32, 80), (39, 388), (45, 235), (53, 76)},

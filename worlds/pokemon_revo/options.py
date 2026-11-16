@@ -261,6 +261,17 @@ class MetronomeTrapWeight(Range):
     range_end = 50
     default = 5
 
+class DSGameVersion(Choice):
+    """
+    Determines the DS Game version.
+    This affects Mysterial's Masters Battle teams.
+    """
+    display_name = "DS Game Version"
+    option_none = 0
+    option_diamond = 1
+    option_pearl = 2
+    default = 0
+
 @dataclass
 class PBROptions(PerGameCommonOptions):
     death_link: DeathLink
@@ -288,6 +299,7 @@ class PBROptions(PerGameCommonOptions):
     stat_drop_trap_weight: StatDropTrapWeight
     allow_accuracy_drop_trap: AllowAccuracyDropTrap
     metronome_trap_weight: MetronomeTrapWeight
+    ds_game_version: DSGameVersion
 
 option_groups = [
     OptionGroup(
@@ -309,4 +321,8 @@ option_groups = [
             MetronomeTrapWeight
         ],
     ),
+    OptionGroup(
+        "Miscellaneous Options",
+        [DSGameVersion],
+    )
 ]

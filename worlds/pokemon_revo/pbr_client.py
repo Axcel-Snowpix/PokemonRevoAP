@@ -1327,6 +1327,16 @@ def check_correct_save(ctx: PBRContext) -> bool:
         if save_check == 0:
             dme.write_bytes(save_file_address + SAVE_SLOT_NAME, ctx.username.encode('utf-8'))
             dme.write_bytes(save_file_address + SAVE_SEED, ctx.server_seed_name.encode('utf-8')[0:10])
+            # Set player's DS Trainer ID and Secret ID
+            tid_sid = random.randint(0x1, 0xFFFFFFFF)
+            tid = tid_sid & 0xFFFF
+            sid = (tid_sid >> 16) & 0xFFFF
+            dme.write_byte(save_file_address + 0x124E7, (tid >> 8) & 0xFF)
+            dme.write_byte(save_file_address + 0x124E0, tid & 0xFF)
+            write_short(save_file_address + 0x124E0, sid)
+            # Set DS Game Version
+            version_byte = dme.read_byte(save_file_address + 0x1256F)
+            dme.write_byte(save_file_address + 0x1256F, version_byte | (ctx.slot_data["ds_game_version"] * 4))
             if not ctx.correct_save:
                 logger.info(CONNECTION_CONNECTED_SAVE_STATUS)
                 ctx.correct_save = True

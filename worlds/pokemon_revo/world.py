@@ -13,7 +13,7 @@ from . import options as pbr_options  # rename due to a name conflict with World
 from .items import ITEM_TABLE, item_name_groups
 from .locations import LOCATION_TABLE, location_name_groups
 from .rom import PBRPatch
-from .pokemon_generator import generate_chaotic_random_pokemon
+from .pokemon_generator import generate_chaotic_random_pokemon, generate_normal_random_pokemon
 
 class PBRSettings(settings.Group):
     class PBRRomFile(settings.UserFilePath):
@@ -52,6 +52,9 @@ class PBRWorld(World):
     location_name_groups: ClassVar[dict[str, set[str]]] = location_name_groups
 
     origin_region_name = "Menu"
+    
+    generated_pokemon: list[dict[str, Any]]
+    
 
     @staticmethod
     def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
@@ -59,9 +62,8 @@ class PBRWorld(World):
         return slot_data
 
     def generate_early(self) -> None:
-        # TODO: Call a general pokemon randomization function that looks at what to do per yaml
-        # settings.
-        generate_chaotic_random_pokemon(self)
+        # Generate the Pokemon that can be given out at level in yaml.
+        self.generated_pokemon = generate_normal_random_pokemon(self, 50)
         re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
         if re_gen_passthrough and self.game in re_gen_passthrough:
             slot_data: dict[str, Any] = re_gen_passthrough[self.game]
@@ -101,17 +103,21 @@ class PBRWorld(World):
         patch.write(os.path.join(output_directory, f"{out_file_name}{patch.patch_file_ending}"))
 
     def fill_slot_data(self) -> Mapping[str, Any]:
-        return self.options.as_dict(
-            "death_link",
-            "death_link_mode",
-            "death_link_group",
-            "damage_link",
-            "damage_link_group",
-            "goal_unlock_method",
-            "required_badge_amount",
-            "colosseum_clear_count",
-            "remove_goal_locations",
-            "randomize_rental_passes",
-            "battlesanity",
-            "ds_game_version",
-        )
+        slot_data = {
+            "pokemon_data": self.generated_pokemon,
+            **self.options.as_dict(
+                "death_link",
+                "death_link_mode",
+                "death_link_group",
+                "damage_link",
+                "damage_link_group",
+                "goal_unlock_method",
+                "required_badge_amount",
+                "colosseum_clear_count",
+                "remove_goal_locations",
+                "randomize_rental_passes",
+                "battlesanity",
+                "ds_game_version"
+            ),
+        }
+        return slot_data

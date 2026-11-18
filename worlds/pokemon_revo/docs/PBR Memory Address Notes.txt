@@ -28,6 +28,11 @@ Colosseum Unlock Bitfield 1: 0x12509
 Colosseum Unlock Bitfield 2: 0x12508
 Post Game Flag: 0x12511 | Bit Index 6
 
+DS Game Version: 0x1256F
+Bit Index 2 = Diamond
+Bit Index 3 = Pearl
+Neither = No Version
+
 Mark if the Player is Currently Borrowing a New Pass from Gateway: 0x125B7
 
 Cyndy's Rental Pass: 0x23A39

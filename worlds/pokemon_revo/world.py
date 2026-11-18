@@ -113,4 +113,5 @@ class PBRWorld(World):
             "remove_goal_locations",
             "randomize_rental_passes",
             "battlesanity",
+            "ds_game_version",
         )

@@ -26,6 +26,8 @@ Bit Flag Table IDs
 0x35 = Sunset Unlock
 0x36 = Stargazer Unlock
 0x39 = Post Game
+0x19b = DS Game Version
+0x249 = Stargazer Masters Battle Set Unlocks
 0x251 = Gateway Post Game Win
 0x257 = Sunny Park Post Game Win
 0x25a = Courtyard Post Game Win
@@ -44,6 +46,8 @@ InitSaveSlotFlags = Gateway and Main Street Unlock
 8013a0a4 = Stargazer Unlock
 
 Post Game Unlock: 8011584c
+
+Check which Mysterial team to use: 8007e338
 
 
 FUN_800e7f24 sets various flags for Battle Passes
@@ -189,6 +193,17 @@ When saving new HP value, r5 tracks the Pokémon's index number
 Switch Pokémon: 0x803bda0c
 
 Save Pokémon HP from Battle Data to Party Data: 0x803dec14
+
+
+80084084 sets the opponent's team at the start of a battle
+r4 = Trainer pool the opponent comes from (i.e. Gateway Rank 1, Stargazer Masters Battle Set 8, etc.)
+Values above 0x26 are Rental Passes, and values above 0x2d seem to be broken.
+r8 = Trainer's index, usually just the battle number - 1
+
+Note: The game only seems to have the current Colosseum's teams and the Rental Passes' teams loaded.
+Trying to use a trainer from another Colosseum results in them using trainer index 0's team, although the trainer data is still works fine.
+
+Messing with r5 and r6 seem to just result in the opponent's team breaking and using trainer 0's team instead of the intended one. 
 
 
 Fresh Save File Documentation

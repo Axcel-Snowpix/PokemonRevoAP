@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from Options import (
     Choice, OptionGroup, PerGameCommonOptions, Range, Toggle, DefaultOnToggle,
-    NamedRange, OptionSet, FreeText, DeathLink as DeathLinkBase,
+    NamedRange, OptionSet, FreeText, DeathLink as DeathLinkBase, StartInventoryPool
 )
 
 class DeathLink(DeathLinkBase):
@@ -300,6 +300,7 @@ class PBROptions(PerGameCommonOptions):
     allow_accuracy_drop_trap: AllowAccuracyDropTrap
     metronome_trap_weight: MetronomeTrapWeight
     ds_game_version: DSGameVersion
+    start_inventory_from_pool: StartInventoryPool
 
 option_groups = [
     OptionGroup(

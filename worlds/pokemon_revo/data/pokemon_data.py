@@ -1,5 +1,5 @@
 id_to_mon = {
-    0: '-',
+    0: '-----',
     1: 'Bulbasaur',
     2: 'Ivysaur',
     3: 'Venusaur',
@@ -500,6 +500,23 @@ id_to_mon = {
     500: 'Wormadam-Trash',
 }
 
+mon_to_id = {**{v: k for k, v in id_to_mon.items()}}
+
+mon_list = []
+for i, mon in id_to_mon.items():
+    if mon == "Deoxys-Normal":
+        mon_list.append("Deoxys")
+    elif mon == "Wormadam-Plant":
+        mon_list.append("Wormadam")
+    elif mon not in ["-----", "Wormadam-Sandy", "Wormadam-Trash", "Deoxys-Attack", "Deoxys-Defense", "Deoxys-Speed"]:
+        mon_list.append(mon)
+
+category_to_id = {
+    'Physical': 0,
+    'Special': 1,
+    'Status': 2
+}
+
 id_to_category = {
     0: 'Physical',
     1: 'Special',
@@ -546,6 +563,25 @@ id_to_type = {
     15: 'Ice',
     16: 'Dragon',
     17: 'Dark'
+}
+
+hp_type_table = {
+    0: 'Fighting',
+    1: 'Flying',
+    2: 'Poison',
+    3: 'Ground',
+    4: 'Rock',
+    5: 'Bug',
+    6: 'Ghost',
+    7: 'Steel',
+    8: 'Fire',
+    9: 'Water',
+    10: 'Grass',
+    11: 'Electric',
+    12: 'Psychic',
+    13: 'Ice',
+    14: 'Dragon',
+    15: 'Dark',
 }
 
 id_to_ability = {
@@ -2061,6 +2097,25 @@ item_to_id = {
     'Razor Fang': 327,
 }
 
+type_to_plate = {
+    type_to_id["Fighting"]: item_to_id["Fist Plate"],
+    type_to_id["Flying"]: item_to_id["Sky Plate"],
+    type_to_id["Poison"]: item_to_id["Toxic Plate"],
+    type_to_id["Ground"]: item_to_id["Earth Plate"],
+    type_to_id["Rock"]: item_to_id["Stone Plate"],
+    type_to_id["Bug"]: item_to_id["Insect Plate"],
+    type_to_id["Ghost"]: item_to_id["Spooky Plate"],
+    type_to_id["Steel"]: item_to_id["Iron Plate"],
+    type_to_id["Fire"]: item_to_id["Flame Plate"],
+    type_to_id["Water"]: item_to_id["Splash Plate"],
+    type_to_id["Grass"]: item_to_id["Meadow Plate"],
+    type_to_id["Electric"]: item_to_id["Zap Plate"],
+    type_to_id["Psychic"]: item_to_id["Mind Plate"],
+    type_to_id["Ice"]: item_to_id["Icicle Plate"],
+    type_to_id["Dragon"]: item_to_id["Draco Plate"],
+    type_to_id["Dark"]: item_to_id["Dread Plate"],
+}
+
 id_to_exp_curve = {
     0: 'medium fast', # n^3
     1: 'erratic',
@@ -2068,6 +2123,48 @@ id_to_exp_curve = {
     3: 'medium slow', # 6/5(n^3) - 15(n^2) + 100n - 140
     4: 'fast', # (4(n^3)) / 5
     5: 'slow', # (5(n^3)) / 4
+}
+
+id_to_nature = {
+    0: 'Hardy',
+    1: 'Lonely',
+    2: 'Brave',
+    3: 'Adamant',
+    4: 'Naughty',
+    5: 'Bold',
+    6: 'Docile',
+    7: 'Relaxed',
+    8: 'Impish',
+    9: 'Lax',
+    10: 'Timid',
+    11: 'Hasty',
+    12: 'Serious',
+    13: 'Jolly',
+    14: 'Naive',
+    15: 'Modest',
+    16: 'Mild',
+    17: 'Quiet',
+    18: 'Bashful',
+    19: 'Rash',
+    20: 'Calm',
+    21: 'Gentle',
+    22: 'Sassy',
+    23: 'Careful',
+    24: 'Quirky',
+}
+
+nature_to_id = {**{v: k for k, v in id_to_nature.items()}}
+
+bit_to_gender = {
+    0b00: "Male",
+    0b01: "Female",
+    0b10: "Genderless",
+}
+
+gender_to_bit = {
+    "Male": 0b00,
+    "Female": 0b01,
+    "Genderless": 0b10,
 }
 
 pokemon_data = {

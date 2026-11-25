@@ -31,7 +31,9 @@ if TYPE_CHECKING:
 
 from .items import ITEM_TABLE, LOOKUP_ID_TO_NAME
 from .locations import LOCATION_TABLE
+from .pokemon_generator import pid_to_ability_for_species, pid_to_gender_for_species
 from .data.gen4_pokemon_structure import Gen4Pokemon, decode_text
+from .data.pokemon_data import id_to_mon, mon_to_id, id_to_ability, ability_to_id, id_to_item, id_to_type, pokemon_data, move_to_id, move_data, id_to_nature, bit_to_gender, id_to_exp_curve
 
 CONNECTION_REFUSED_GAME_STATUS = (
     "Dolphin failed to connect. Please load a randomized ROM for Pokémon Battle Revolution. Trying again in 5 seconds..."
@@ -99,7 +101,7 @@ BATTLE_PASS_SIZE = 0x6EC
 BATTLE_PASS_PKMN_OFFSET = 0x1FC
 
 # Size of Pokémon Struct
-PKMM_SIZE = 0x88
+PKMN_SIZE = 0x88
 
 # Offset for Player's Copied Pokémon Boxes
 PKMN_BOXES_OFFSET = 0x5F8
@@ -252,6 +254,139 @@ class PBRCommandProcessor(SuperCommandProcessor):
                 )
             else:
                 logger.info("Please connect to a multiworld first.")
+
+    async def _cmd_release_pokemon(self, box=None, slot=None) -> None:
+        """
+        Releases a Pokémon.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is None:
+                logger.info("Error: Please connect to a server first.")
+                return
+            elif not check_correct_save(self.ctx):
+                logger.info("Error: Please load into a save file made for this multiworld first.")
+                return
+            elif box == None or slot == None:
+                logger.info("Error: Please insert the Pokémon's box and slot number into the command.")
+                return
+            try:
+                box = int(box) - 1
+                slot = int(slot) - 1
+            except ValueError:
+                logger.info("Error: Please enter a number for the Pokémon's box and slot.")
+                return
+            if box < 0 or box > 17:
+                logger.info("Error: Invalid box number. Please insert a number from 1 to 18.")
+                return
+            elif slot < 0 or slot > 29:
+                logger.info("Error: Invalid slot number. Please insert a number from 1 to 30.")
+                return
+            save_file_address = find_save_file_address()
+            pkmn_offset = PKMN_BOXES_OFFSET + PKMN_BOX_SIZE * box + PKMN_SIZE * slot
+            pkmn = dme.read_bytes(save_file_address + pkmn_offset, PKMN_SIZE)
+            if int.from_bytes(pkmn, byteorder="big") == 0:
+                logger.info("Error: No Pokémon was found in the specified box.")
+                return
+            pkmn = Gen4Pokemon.create_from_binary(pkmn)
+            if pkmn.species in [mon_to_id["Deoxys-Normal"], mon_to_id["Deoxys-Attack"], mon_to_id["Deoxys-Defense"], mon_to_id["Deoxys-Speed"]]:
+                species = "Deoxys"
+            elif pkmn.species in [mon_to_id["Wormadam-Plant"], mon_to_id["Wormadam-Sandy"], mon_to_id["Wormadam-Trash"]]:
+                species = "Wormadam"
+            else:
+                species = id_to_mon[pkmn.species]
+            if bool(pkmn.ivs & 0x1):
+                logger.info(f"Are you sure you want to release {pkmn.nickname} from box {box + 1}, slot {slot + 1}?\n[Y/N/I]")
+            else:
+                logger.info(f"Are you sure you want to release {pkmn.nickname} the {species} from box {box + 1}, slot {slot + 1}?\n[Y/N/I]")
+            while True:
+                answer = (await self.ctx.console_input()).upper()
+                if answer in ["Y","YES"]:
+                    dme.write_bytes(save_file_address + pkmn_offset, 0x0.to_bytes(PKMN_SIZE, byteorder="big"))
+                    logger.info(f"{pkmn.nickname} was released. Goodbye, {pkmn.nickname}!")
+                    break
+                elif answer in ["N","NO"]:
+                    logger.info(f"Release cancelled. {pkmn.nickname} was not released.")
+                    break
+                elif answer in ["I","INFO","INFORMATION"]:
+                    id_to_move = {v: k for k, v in move_to_id.items()}
+                    logger.info(f"""Nickname: {pkmn.nickname} | Species: {species} | Gender: {bit_to_gender[pkmn.flagsB >> 5 & 3]}
+Type 1: {id_to_type[pokemon_data[pkmn.species]['type1']]} | Type 2: {id_to_type[pokemon_data[pkmn.species]['type2']]}
+Ability: {id_to_ability[pkmn.ability]} | Item: {id_to_item[pkmn.held_item]} | Nature: {id_to_nature[(pkmn.personality_value % 100) % 25]}
+Moves: {id_to_move[pkmn.move1]}/{id_to_move[pkmn.move2]}/{id_to_move[pkmn.move3]}/{id_to_move[pkmn.move4]}
+IVs: {pkmn.ivs >> 27 & 31}/{pkmn.ivs >> 22 & 31}/{pkmn.ivs >> 17 & 31}/{pkmn.ivs >> 7 & 31}/{pkmn.ivs >> 2 & 31}/{pkmn.ivs >> 12 & 31}
+EVs: {pkmn.hp_ev}/{pkmn.atk_ev}/{pkmn.def_ev}/{pkmn.spa_ev}/{pkmn.spd_ev}/{pkmn.spe_ev}""")
+                    logger.info(f"Would you like to release {pkmn.nickname}? [Y/N/I]")
+                    continue
+                else:
+                    logger.info("Error: Please answer with \"Y\", \"N\" or \"I\".")
+                    continue
+
+    async def _cmd_send_wonder_trade(self, box=None, slot=None) -> None:
+        """
+        Send out a Pokémon to Wonder Trade.
+        """
+        if isinstance(self.ctx, PBRContext):
+            if self.ctx.slot is None:
+                logger.info("Error: Please connect to a server first.")
+                return
+            elif not check_correct_save(self.ctx):
+                logger.info("Error: Please load into a save file made for this multiworld first.")
+                return
+            elif box == None or slot == None:
+                logger.info("Error: Please insert the Pokémon's box and slot number into the command.")
+                return
+            try:
+                box = int(box) - 1
+                slot = int(slot) - 1
+            except ValueError:
+                logger.info("Error: Please enter a number for the Pokémon's box and slot.")
+                return
+            if box < 0 or box > 17:
+                logger.info("Error: Invalid box number. Please insert a number from 1 to 18.")
+                return
+            elif slot < 0 or slot > 29:
+                logger.info("Error: Invalid slot number. Please insert a number from 1 to 30.")
+                return
+            save_file_address = find_save_file_address()
+            pkmn_offset = PKMN_BOXES_OFFSET + PKMN_BOX_SIZE * box + PKMN_SIZE * slot
+            pkmn = dme.read_bytes(save_file_address + pkmn_offset, PKMN_SIZE)
+            if int.from_bytes(pkmn, byteorder="big") == 0:
+                logger.info("Error: No Pokémon was found in the specified box.")
+                return
+            pkmn = Gen4Pokemon.create_from_binary(pkmn)
+            if pkmn.species in [mon_to_id["Deoxys-Normal"], mon_to_id["Deoxys-Attack"], mon_to_id["Deoxys-Defense"], mon_to_id["Deoxys-Speed"]]:
+                species = "Deoxys"
+            elif pkmn.species in [mon_to_id["Wormadam-Plant"], mon_to_id["Wormadam-Sandy"], mon_to_id["Wormadam-Trash"]]:
+                species = "Wormadam"
+            else:
+                species = id_to_mon[pkmn.species]
+            if bool(pkmn.ivs & 0x1):
+                logger.info(f"Are you sure you want to send {pkmn.nickname} from box {box + 1}, slot {slot + 1} to Wonder Trade?\n[Y/N/I]")
+            else:
+                logger.info(f"Are you sure you want to send {pkmn.nickname} the {species} from box {box + 1}, slot {slot + 1} to Wonder Trade?\n[Y/N/I]")
+            while True:
+                answer = (await self.ctx.console_input()).upper()
+                if answer in ["Y","YES"]:
+                    dme.write_bytes(save_file_address + pkmn_offset, 0x0.to_bytes(PKMN_SIZE, byteorder="big"))
+                    # TODO: Actually send the Pokémon to Wonder Trade.
+                    logger.info(f"{pkmn.nickname} was sent to Wonder Trade!")
+                    break
+                elif answer in ["N","NO"]:
+                    logger.info(f"Cancelling Wonder Trade. {pkmn.nickname} was not sent out.")
+                    break
+                elif answer in ["I","INFO","INFORMATION"]:
+                    id_to_move = {v: k for k, v in move_to_id.items()}
+                    logger.info(f"""Nickname: {pkmn.nickname} | Species: {species} | Gender: {bit_to_gender[pkmn.flagsB >> 5 & 3]}
+Type 1: {id_to_type[pokemon_data[pkmn.species]['type1']]} | Type 2: {id_to_type[pokemon_data[pkmn.species]['type2']]}
+Ability: {id_to_ability[pkmn.ability]} | Item: {id_to_item[pkmn.held_item]} | Nature: {id_to_nature[(pkmn.personality_value % 100) % 25]}
+Moves: {id_to_move[pkmn.move1]}/{id_to_move[pkmn.move2]}/{id_to_move[pkmn.move3]}/{id_to_move[pkmn.move4]}
+IVs: {pkmn.ivs >> 27 & 31}/{pkmn.ivs >> 22 & 31}/{pkmn.ivs >> 17 & 31}/{pkmn.ivs >> 7 & 31}/{pkmn.ivs >> 2 & 31}/{pkmn.ivs >> 12 & 31}
+EVs: {pkmn.hp_ev}/{pkmn.atk_ev}/{pkmn.def_ev}/{pkmn.spa_ev}/{pkmn.spd_ev}/{pkmn.spe_ev}""")
+                    logger.info(f"Would you like to send out {pkmn.nickname} to Wonder Trade? [Y/N/I]")
+                    continue
+                else:
+                    logger.info("Error: Please answer with \"Y\", \"N\" or \"I\".")
+                    continue
 
 class PBRContext(SuperContext):
     """
@@ -650,7 +785,7 @@ async def give_death(ctx: PBRContext) -> None:
             pkmn_offset = 0xc0 * pkmn_field_idx
             pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
             pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
-            pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
+            pkmn = dme.read_bytes(pkmn_party_data, PKMN_SIZE)
             if ctx.has_got_pkmn_faint_data:
                 ctx.pkmn_faint_status[pkmn_party_idx] = True
             if ctx.has_got_pkmn_dmg_data:
@@ -767,7 +902,7 @@ async def give_damage(ctx: PBRContext) -> None:
         if pkmn_hp <= 0:
             pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
             pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
-            pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
+            pkmn = dme.read_bytes(pkmn_party_data, PKMN_SIZE)
             # Set Pokémon's Moves to Splash if they'll faint (Prevents them from doing anything this turn)
             write_short(field_data_addr + 0x2d4c + pkmn_offset, 0x96)
             write_short(field_data_addr + 0x2d4c + pkmn_offset + 0x2, 0x96)
@@ -868,7 +1003,7 @@ def _give_item(ctx: PBRContext, item_name: str, index: int) -> bool:
                 pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
                 pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
                 ctx.pkmn_queue.append(item_name)
-                ctx.pkmn_queue_idxs.append(item_name)
+                ctx.pkmn_queue_idxs.append(index)
                 Utils.async_start(ctx.update_server_variable(pkmn_queue_key, ctx.pkmn_queue))
                 Utils.async_start(ctx.update_server_variable(pkmn_queue_idxs_key, ctx.pkmn_queue_idxs))
             return True
@@ -1002,10 +1137,10 @@ async def battle_item_queue(ctx: PBRContext) -> None:
                     dme.write_byte(perfect_points_addr, new_perfect_points)
                     logger.info(f"Perfect Point count was raised from {current_perfect_points} to {new_perfect_points}!")
             case "Status Conditions":
-                if item != "Sleep Trap":
-                    status = 0x1 << item_data.values[0]
-                else:
+                if item == "Sleep Trap":
                     status = random.randint(2,5)
+                else:
+                    status = 0x1 << item_data.values[0]
                 dme.write_byte(pkmn_field_data + 0x2daf, status)
                 dme.write_byte(pkmn_party_data + 0x8b, status)
                 logger.info(f"{item} procced! {pkmn_nickname} was hit by the trap!")
@@ -1019,7 +1154,7 @@ async def battle_item_queue(ctx: PBRContext) -> None:
                 volatile_statuses = dme.read_word(field_data_addr + 0x2db0 + pkmn_offset)
                 pkmn_field_moves = dme.read_bytes(field_data_addr + 0x2d4c + pkmn_offset, 8)
                 pkmn_field_pp = dme.read_word(field_data_addr + 0x2d6c + pkmn_offset)
-                pkmn = dme.read_bytes(pkmn_party_data, PKMM_SIZE)
+                pkmn = dme.read_bytes(pkmn_party_data, PKMN_SIZE)
                 # Trap Pokémon in the field, to prevent switching out and nullifying the trap.
                 is_already_trapped = bool((volatile_statuses >> 26) & 0x1)
                 if not is_already_trapped:
@@ -1090,8 +1225,8 @@ async def pkmn_queue(ctx: PBRContext) -> None:
     slot_idx = 0
     pkmn_slot_offset = 0
     while box_idx < 18:
-        pkmn_slot_offset = 0x5f8 + PKMN_BOX_SIZE * box_idx + PKMM_SIZE * slot_idx
-        if dme.read_bytes(save_file_address + pkmn_slot_offset, PKMM_SIZE) == 0:
+        pkmn_slot_offset = 0x5f8 + PKMN_BOX_SIZE * box_idx + PKMN_SIZE * slot_idx
+        if int.from_bytes(dme.read_bytes(save_file_address + pkmn_slot_offset, PKMN_SIZE), byteorder="big") == 0:
             break
         else:
             pkmn_slot_offset = 0
@@ -1108,8 +1243,97 @@ async def pkmn_queue(ctx: PBRContext) -> None:
             if ctx.pkmn_queue_idxs[i] < ctx.pkmn_queue_idxs[pkmn_idx]:
                 pkmn_idx = i
     # Insert way of getting the Pokémon's data
-    pkmn = 0
-    dme.write_bytes(save_file_address + pkmn_slot_offset, pkmn)
+    if ctx.pkmn_queue[pkmn_idx] == "Deoxys":
+        species = mon_to_id["Deoxys-Normal"]
+    elif ctx.pkmn_queue[pkmn_idx] == "Wormadam":
+        species = mon_to_id["Wormadam-Plant"]
+    else:
+        species = mon_to_id[ctx.pkmn_queue[pkmn_idx]]
+    pkmn_data = ctx.slot_data["pokemon_data"][species]
+    tid = dme.read_byte(save_file_address + 0x124E7) << 8
+    tid += dme.read_byte(save_file_address + 0x124E0)
+    sid = read_short(save_file_address + 0x124E5)
+    if id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "medium fast":
+        exp = pkmn_data["lvl"] ** 3
+    elif id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "erratic":
+        if pkmn_data["lvl"] < 50:
+            exp = int(pkmn_data["lvl"] ** 3 * (100 - pkmn_data["lvl"]) // 50)
+        elif pkmn_data["lvl"] < 68:
+            exp = int(pkmn_data["lvl"] ** 3 * (150 - pkmn_data["lvl"]) // 100)
+        elif pkmn_data["lvl"] < 98:
+            exp = int(pkmn_data["lvl"] ** 3 * ((1911 - 10 * pkmn_data["lvl"]) // 3) // 500)
+        else: # elif pkmn_data["lvl"] <= 100:
+            exp = int(pkmn_data["lvl"] ** 3 * (160 - pkmn_data["lvl"]) // 100)
+    elif id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "fluctuating":
+        if pkmn_data["lvl"] < 15:
+            exp = int(pkmn_data["lvl"] ** 3 * (((pkmn_data["lvl"] + 1) // 3) + 24) // 50)
+        elif pkmn_data["lvl"] < 36:
+            exp = int(pkmn_data["lvl"] ** 3 * (pkmn_data["lvl"] + 14) // 50)
+        else: # elif pkmn_data["lvl"] <= 100:
+            exp = int(pkmn_data["lvl"] ** 3 * ((pkmn_data["lvl"] // 2) + 32) // 50)
+    elif id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "medium slow":
+        exp = int(6/5 * (pkmn_data["lvl"] ** 3) - 15*(pkmn_data["lvl"] ** 2) + 100*pkmn_data["lvl"] - 140)
+    elif id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "fast":
+        exp = int(4*(pkmn_data["lvl"] ** 3) // 5)
+    else: # elif id_to_exp_curve[pokemon_data[species]["exp_curve"]] == "slow":
+        exp = int(5*(pkmn_data["lvl"] ** 3) // 4)
+    flagsB = 0x1 << 15 # Fateful Encounter Flag.
+    flagsB += pid_to_gender_for_species(pkmn_data["pid"], species) << 13
+    flagsB += pkmn_data["form"] << 8
+    date = time.localtime(time.time())
+    # I know, I could just do [2:4] and it'd work just fine, but I'll be damned if I'm not accounting
+    # for the miniscule chance that someone plays this in a year with 5 digits or more. (also doing this is really funny).
+    year_length = len(str(date.tm_year))
+    met_year = int(str(date.tm_year)[year_length - 2:year_length])
+    pkmn = Gen4Pokemon(
+        personality_value=pkmn_data["pid"],
+
+        # Block A
+        species=species,
+        held_item=pkmn_data["item"],
+        sid=sid,
+        tid=tid,
+        experience=exp,
+        friendship=pkmn_data["friendship"],
+        ability=pid_to_ability_for_species(pkmn_data["pid"], species),
+        language=2, # English
+        hp_ev=pkmn_data["hp_ev"],
+        atk_ev=pkmn_data["atk_ev"],
+        def_ev=pkmn_data["def_ev"],
+        spe_ev=pkmn_data["spe_ev"],
+        spa_ev=pkmn_data["spa_ev"],
+        spd_ev=pkmn_data["spd_ev"],
+
+        # Block B
+        move1=pkmn_data["moves"][0],
+        move2=pkmn_data["moves"][1],
+        move3=pkmn_data["moves"][2],
+        move4=pkmn_data["moves"][3],
+        # Note: May need to change this if we add PP Ups.
+        move1_pp=move_data[pkmn_data["moves"][0]]["pp"],
+        move2_pp=move_data[pkmn_data["moves"][1]]["pp"],
+        move3_pp=move_data[pkmn_data["moves"][2]]["pp"],
+        move4_pp=move_data[pkmn_data["moves"][3]]["pp"],
+        ivs=pkmn_data["ivs"],
+        flagsB=flagsB,
+
+        # Block C
+        # TODO: Add Nicknames.
+        nickname=ctx.pkmn_queue[pkmn_idx].upper(),
+        game_of_origin=0x10, # Battle Revolution
+
+        # Block D
+        # Maybe make this the player's in-game name, or the sender of the mon? There's potential for other options.
+        trainer_name="ARCHI",
+        met_year=met_year,
+        met_month=date.tm_mon,
+        met_day=date.tm_mday,
+        dp_met_loc=0x0BBA, # Faraway Place
+        pokeball=pkmn_data["pokeball"],
+        met_level=pkmn_data["lvl"] << 1, # OT Gender is also included, may want to do something about it.
+        hgss_pokeball=pkmn_data["pokeball"],
+    )
+    dme.write_bytes(save_file_address + pkmn_slot_offset, pkmn.build_binary())
     expected_idx = read_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET)
     write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, max(ctx.pkmn_queue_idxs[0], expected_idx))
     pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
@@ -1243,7 +1467,7 @@ async def check_death(ctx: PBRContext) -> None:
                     pokemon_data_addr = party_data_addr + ctx.deathlink_pkmn_idx * 0xa4 + 0x8
                     new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
                     if new_pkmn_hp <= 0 and not ctx.pkmn_faint_status[ctx.deathlink_pkmn_idx]:
-                        pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMM_SIZE))
+                        pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMN_SIZE))
                         ctx.pkmn_faint_status[ctx.deathlink_pkmn_idx] = True
                         await ctx.send_death(ctx.player_names[ctx.slot] + f"'s {pkmn.nickname} fainted!")
                     ctx.deathlink_pkmn_idx += 1
@@ -1297,7 +1521,7 @@ async def check_damage(ctx: PBRContext) -> None:
                 new_pkmn_hp = read_short(pokemon_data_addr + 0x8e)
                 damage = max(ctx.pkmn_hp[ctx.dmglink_pkmn_idx] - new_pkmn_hp, 0)
                 if damage > 0:
-                    pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMM_SIZE))
+                    pkmn = Gen4Pokemon.create_from_binary(dme.read_bytes(pokemon_data_addr, PKMN_SIZE))
                     await ctx.send_damage(damage, f"{ctx.player_names[ctx.slot]}'s {pkmn.nickname} took {damage} damage!")
                 ctx.pkmn_hp[ctx.dmglink_pkmn_idx] = new_pkmn_hp
                 ctx.dmglink_pkmn_idx += 1
@@ -1333,7 +1557,7 @@ def check_correct_save(ctx: PBRContext) -> bool:
             sid = (tid_sid >> 16) & 0xFFFF
             dme.write_byte(save_file_address + 0x124E7, (tid >> 8) & 0xFF)
             dme.write_byte(save_file_address + 0x124E0, tid & 0xFF)
-            write_short(save_file_address + 0x124E0, sid)
+            write_short(save_file_address + 0x124E5, sid)
             # Set DS Game Version
             version_byte = dme.read_byte(save_file_address + 0x1256F)
             dme.write_byte(save_file_address + 0x1256F, version_byte | (ctx.slot_data["ds_game_version"] * 4))

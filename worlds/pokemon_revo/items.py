@@ -6,7 +6,7 @@ from Utils import logging
 
 from BaseClasses import Item, ItemClassification
 
-from .data.pokemon_data import id_to_mon
+from .data.pokemon_data import id_to_mon, mon_list
 
 if TYPE_CHECKING:
     from .world import PBRWorld
@@ -89,7 +89,7 @@ ITEM_TABLE: dict[str, PBRItemData] = {
 
     "Metronome Trap": PBRItemData("Move Changes", ItemClassification.trap, 46, [0x76, 0xA]),
 
-    **{pkmn: PBRItemData("Pokémon", ItemClassification.useful, 46 + i) for i, pkmn in enumerate(id_to_mon.values()) if pkmn != '-'}
+    **{pkmn: PBRItemData("Pokémon", ItemClassification.useful, 47 + mon_list.index(pkmn)) for pkmn in mon_list},
 }
 
 
@@ -130,8 +130,8 @@ def get_random_filler_item_name(world: PBRWorld, itempool) -> str:
         for i in range(0,len(item_weights)):
             if item_weights[i] > 0 and i != 0:
                 has_other_filler = True
-        for pkmn in id_to_mon:
-            if pkmn not in itempool:
+        for i in range(0,len(mon_list)):
+            if world.create_item(id_to_mon[i]) not in itempool:
                 pkmn_available = True
                 break
         if not pkmn_available:

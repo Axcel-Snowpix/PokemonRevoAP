@@ -83,8 +83,8 @@ class Gen4Pokemon:
     # Block A
     species: int = 0 # half
     held_item: int = 0 # half
-    tid: int = 0 # half
     sid: int = 0 # half
+    tid: int = 0 # half
     experience: int = 0 # int
     friendship: int = 0 # byte
     ability: int = 0 # byte
@@ -133,12 +133,12 @@ class Gen4Pokemon:
 
     # Block D
     trainer_name: str = "" # 16 bytes total including an FF terminator
-    egg_date_1: int = 0 # byte
-    egg_date_2: int = 0 # byte
-    egg_date_3: int = 0 # byte
-    met_date_1: int = 0 # byte
-    met_date_2: int = 0 # byte
-    met_date_3: int = 0 # byte
+    egg_year: int = 0 # byte
+    egg_month: int = 0 # byte
+    egg_day: int = 0 # byte
+    met_year: int = 0 # byte
+    met_month: int = 0 # byte
+    met_day: int = 0 # byte
     dp_egg_loc: int = 0 # half
     dp_met_loc: int = 0 # half
     pokerus: int = 0 # byte
@@ -151,8 +151,8 @@ class Gen4Pokemon:
     def parse_a_block(self, data: bytes) -> None:
         self.species = int.from_bytes(data[0:2], byteorder="big")
         self.held_item = int.from_bytes(data[2:4], byteorder="big")
-        self.tid = int.from_bytes(data[4:6], byteorder="big")
-        self.sid = int.from_bytes(data[6:8], byteorder="big")
+        self.sid = int.from_bytes(data[4:6], byteorder="big")
+        self.tid = int.from_bytes(data[6:8], byteorder="big")
         self.experience = int.from_bytes(data[8:0xC], byteorder="big")
         self.friendship = data[0xC]
         self.ability = data[0xD]
@@ -176,8 +176,8 @@ class Gen4Pokemon:
         output = bytearray()
         output.extend(self.species.to_bytes(2, byteorder="big"))
         output.extend(self.held_item.to_bytes(2, byteorder="big"))
-        output.extend(self.tid.to_bytes(2, byteorder="big"))
         output.extend(self.sid.to_bytes(2, byteorder="big"))
+        output.extend(self.tid.to_bytes(2, byteorder="big"))
         output.extend(self.experience.to_bytes(4, byteorder="big"))
         output.append(self.friendship)
         output.append(self.ability)
@@ -267,12 +267,12 @@ class Gen4Pokemon:
     def parse_d_block(self, data: bytes) -> None:
         trainer_bytes = data[:0x10]
         self.trainer_name = decode_text(trainer_bytes, 8)
-        self.egg_date_1 = data[0x10]
-        self.egg_date_2 = data[0x11]
-        self.egg_date_3 = data[0x12]
-        self.met_date_1 = data[0x13]
-        self.met_date_2 = data[0x14]
-        self.met_date_3 = data[0x15]
+        self.egg_year = data[0x10]
+        self.egg_month = data[0x11]
+        self.egg_day = data[0x12]
+        self.met_year = data[0x13]
+        self.met_month = data[0x14]
+        self.met_day = data[0x15]
         self.dp_egg_loc = int.from_bytes(data[0x16:0x18], byteorder="big")
         self.dp_met_loc = int.from_bytes(data[0x18:0x1A], byteorder="big")
         self.pokerus = data[0x1A]
@@ -289,12 +289,12 @@ class Gen4Pokemon:
             output.extend(PBR_ENCODING[char].to_bytes(2, byteorder="big"))
         output.extend([0xFF, 0xFF])
         output.extend([0] * ((7 - len(trainer_name)) * 2))
-        output.append(self.egg_date_1)
-        output.append(self.egg_date_2)
-        output.append(self.egg_date_3)
-        output.append(self.met_date_1)
-        output.append(self.met_date_2)
-        output.append(self.met_date_3)
+        output.append(self.egg_year)
+        output.append(self.egg_month)
+        output.append(self.egg_day)
+        output.append(self.met_year)
+        output.append(self.met_month)
+        output.append(self.met_day)
         output.extend(self.dp_egg_loc.to_bytes(2, byteorder="big"))
         output.extend(self.dp_met_loc.to_bytes(2, byteorder="big"))
         output.append(self.pokerus)

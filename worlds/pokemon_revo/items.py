@@ -131,7 +131,7 @@ def get_random_filler_item_name(world: PBRWorld, itempool) -> str:
             if item_weights[i] > 0 and i != 0:
                 has_other_filler = True
         for i in range(0,len(mon_list)):
-            if world.create_item(id_to_mon[i]) not in itempool:
+            if world.create_item(mon_list[i]) not in itempool:
                 pkmn_available = True
                 break
         if not pkmn_available:

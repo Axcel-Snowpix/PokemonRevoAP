@@ -243,8 +243,6 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         for id in list(move_data_mod.keys()):
             move_data_mod[id]['type'] = type_to_id['Normal']
         logger.info("Set all moves to Normal Type.")
-
-    # TODO: Generate EVs.
     
     # Check for valid moves for the species.
     selected_moves: list[int] = []
@@ -551,6 +549,33 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         selected_moves = selected_moves[4:]
     
     logger.info('Moveset: %s', str([move_data[item]["name"] for item in selected_moves]))
+
+    # Generate EVs.
+    total_evs = world.random.randint(0, 510)
+    logger.info(f"Total EVs: {total_evs}")
+    stats_pool = ["hp", "atk", "def", "spe", "spa", "spd"]
+    evs = {"hp": 0, "atk": 0, "def": 0, "spe": 0, "spa": 0, "spd": 0}
+    physical = False
+    special = False
+    for move in selected_moves:
+        if move_data[move]["category"] == category_to_id["Physical"]:
+            physical = True
+        elif move_data[move]["category"] == category_to_id["Special"]:
+            special = True
+    if not physical:
+        stats_pool.remove("atk")
+    if not special:
+        stats_pool.remove("spa")
+    while total_evs > 0:
+        stat_chosen = world.random.sample(stats_pool, 1)[0]
+        ev_amount = world.random.randint(1,min(total_evs, 252))
+        if evs[stat_chosen] + ev_amount > 252:
+            ev_amount = 252 - evs[stat_chosen]
+        evs[stat_chosen] += ev_amount
+        if evs[stat_chosen] >= 252:
+            stats_pool.remove(stat_chosen)
+        total_evs -= ev_amount
+    logger.info(f"EV Spread: {evs["hp"]}/{evs["atk"]}/{evs["def"]}/{evs["spe"]}/{evs["spa"]}/{evs["spd"]}")
     
     if species == mon_to_id["Arceus"] and form > 0:
         selected_item = type_to_plate[form]
@@ -572,13 +597,12 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         "friendship": friendship,
         "moves": selected_moves,
         "item": selected_item,
-        # Placeholder EVs.
-        "hp_ev": 0,
-        "atk_ev": 0,
-        "def_ev": 0,
-        "spe_ev": 0,
-        "spa_ev": 0,
-        "spd_ev": 0,
+        "hp_ev": evs["hp"],
+        "atk_ev": evs["atk"],
+        "def_ev": evs["def"],
+        "spe_ev": evs["spe"],
+        "spa_ev": evs["spa"],
+        "spd_ev": evs["spd"],
         "pokeball": pokeball,
     }
     return minimal_pokemon_data

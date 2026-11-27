@@ -143,7 +143,7 @@ def generate_normal_random_pokemon(world: World, lvl: int) -> list[dict[str, Any
                     species = 498 + form
             lvl_moves: set[int] = set({move for lvl_learned, move in list(level_up_moves[species]) if lvl_learned < lvl})
             tm_moves: set[int] = tm_learnsets[species]
-            generated_pokemon.append(generate_pokemon_inner(world, species, lvl_moves, tm_moves, set(), lvl))
+            generated_pokemon.append(generate_pokemon_inner(world, species, lvl_moves, tm_moves, lvl))
     return generated_pokemon
 
 def generate_chaotic_random_pokemon(world: World, lvl):
@@ -158,10 +158,10 @@ def generate_chaotic_random_pokemon(world: World, lvl):
                 form = world.random.randint(0,2)
                 if form > 0:
                     species = 498 + form
-            generated_pokemon.append(generate_pokemon_inner(world, species, set(move_data.keys()), set(move_data.keys()), set(), lvl))
+            generated_pokemon.append(generate_pokemon_inner(world, species, set(move_data.keys()), set(move_data.keys()), lvl))
     return generated_pokemon
 
-def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_moves: set[int], items: set[int], lvl: int) -> dict[str, Any]:
+def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_moves: set[int], lvl: int) -> dict[str, Any]:
     logger = logging.getLogger()
 
     species_data = pokemon_data[species]
@@ -183,7 +183,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     elif species == mon_to_id["Arceus"]:
         form_list = list(type_to_id.values())
         form_list.remove(type_to_id["???"])
-        form = world.random.sample(form_list, 1)[0]
+        form = world.random.choice(form_list)
         species_data["type1"] = form
         species_data["type2"] = form
     else:
@@ -646,14 +646,14 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     if not special:
         stats_pool.remove("spa")
     if move_to_id["Trick Room"] in selected_moves:
-        stats_pool.remove("spd")
+        stats_pool.remove("spe")
     while total_evs > 0:
-        stat_chosen = world.random.sample(stats_pool, 1)[0]
-        ev_amount = world.random.randint(1,min(total_evs, 252))
-        if evs[stat_chosen] + ev_amount > 252:
-            ev_amount = 252 - evs[stat_chosen]
+        stat_chosen = world.random.choice(stats_pool)
+        ev_amount = world.random.randint(1,min(total_evs, 252 - evs[stat_chosen]))
         evs[stat_chosen] += ev_amount
-        if evs[stat_chosen] >= 252:
+        if evs[stat_chosen] > 252:
+            raise ValueError("EV for a single stat is higher than 252. This should not be possible, please report this if you see it.")
+        elif evs[stat_chosen] == 252:
             stats_pool.remove(stat_chosen)
         total_evs -= ev_amount
     logger.info(f"EV Spread: {evs["hp"]}/{evs["atk"]}/{evs["def"]}/{evs["spe"]}/{evs["spa"]}/{evs["spd"]}")
@@ -672,7 +672,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     elif species == mon_to_id["Farfetch'D"] and physical and world.random.random() < 0.5:
         selected_item = item_to_id["Stick"]
     elif species == mon_to_id["Ditto"] and world.random.random() < 0.5:
-        if not special or world.random.random() < 0.25:
+        if world.random.random() < 0.25:
            selected_item = item_to_id["Metal Powder"]
         else:
            selected_item = item_to_id["Quick Powder"]
@@ -690,15 +690,15 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         if len(steel_or_dragon_moves) > 0:
             selected_item = item_to_id["Adamant Orb"]
     elif species == mon_to_id["Palkia"] and world.random.random() < 0.25:
-        steel_or_dragon_moves = {k for k, v in move_data_mod.items() if k in selected_moves and(v["type"] == type_to_id["Dragon"] or v["type"] == type_to_id["Water"]) and 0 < v["power"]}
-        if len(steel_or_dragon_moves) > 0:
+        water_or_dragon_moves = {k for k, v in move_data_mod.items() if k in selected_moves and(v["type"] == type_to_id["Dragon"] or v["type"] == type_to_id["Water"]) and 0 < v["power"]}
+        if len(water_or_dragon_moves) > 0:
             selected_item = item_to_id["Lustrous Orb"]
     
     # Handle cases where a very specific item should be used.
     if has_item_stealing_move:
         pass
     elif move_to_id["Natural Gift"] in selected_moves:
-        current_move_types = set({move_data_mod[move]["type"] for move in selected_moves})
+        current_move_types = set({move_data_mod[move]["type"] for move in selected_moves if move != move_to_id["Natural Gift"]})
         pickable_berries = {k for k, v in berry_to_natural_gift_type.items() if v not in current_move_types}
         selected_item = world.random.choice(list(pickable_berries))
     elif move_to_id["Fling"] in selected_moves:
@@ -708,7 +708,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         selected_item = world.random.choice(list(selectable_fling_items))
     elif move_to_id["Trick"] in selected_moves or move_to_id["Switcheroo"] in selected_moves:
         selected_item = world.random.choice([item_to_id["Full Incense"], item_to_id["Lagging Tail"], item_to_id["Flame Orb"], item_to_id["Iron Ball"], item_to_id["Black Sludge"], item_to_id["Toxic Orb"], item_to_id["Choice Scarf"], item_to_id["Macho Brace"]])
-    elif move_to_id["Belly Drum"] in selected_moves and world.random.random() < 0.80:
+    elif move_to_id["Belly Drum"] in selected_moves and world.random.random() < 0.8:
         selected_item = item_to_id["Sitrus Berry"]
     elif move_to_id["Rest"] in selected_moves and world.random.random() < 0.5:
         selected_item = item_to_id["Chesto Berry"]
@@ -761,8 +761,6 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
             # TODO: Type-enhancing Items
             
             # TODO: Plate Items
-            
-            # TODO: Eviolite Also Add Data
             
             # TODO: Grip Claw
             

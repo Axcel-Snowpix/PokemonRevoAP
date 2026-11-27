@@ -5,7 +5,7 @@ from typing import Any
 from worlds.AutoWorld import World
 
 from .data.gen4_pokemon_structure import Gen4Pokemon, decode_text
-from .data.pokemon_data import pokemon_data, ability_to_id, item_to_id, id_to_item, move_to_id, move_data, category_to_id, level_up_moves, id_to_mon, mon_to_id, type_to_id, type_to_plate, tm_learnsets, hp_type_table, bit_to_gender, gender_to_bit, id_to_ability, id_to_nature
+from .data.pokemon_data import pokemon_data, ability_to_id, item_to_id, id_to_item, move_to_id, move_data, category_to_id, level_up_moves, id_to_mon, mon_to_id, type_to_id, type_to_plate, tm_learnsets, hp_type_table, bit_to_gender, gender_to_bit, id_to_ability, id_to_nature, berry_to_natural_gift_type 
 
 weather_setting_moves: set[int] = {move_to_id['Sunny Day'], move_to_id['Sandstorm'], move_to_id['Rain Dance'], move_to_id['Hail']}
 harsh_sunlight_moves: set[int] = {move_to_id['SolarBeam'], move_to_id['Weather Ball'], move_to_id['Moonlight'], move_to_id['Synthesis'], move_to_id['Morning Sun']}
@@ -17,13 +17,34 @@ two_turn_moves: set[int] = {move_to_id['Bounce'], move_to_id['Dig'], move_to_id[
 protect_moves: set[int] = {move_to_id['Protect'], move_to_id['Detect']}
 recharge_moves: set[int] = {move_to_id['Giga Impact'], move_to_id['Rock Wrecker'], move_to_id['Hyper Beam'], move_to_id['Blast Burn'], move_to_id['Hydro Cannon'], move_to_id['Frenzy Plant'], move_to_id['Roar of Time']}
 recoil_moves: set[int] = {move_to_id["Brave Bird"], move_to_id["Double-Edge"], move_to_id["Flare Blitz"], move_to_id["Head Smash"], move_to_id["Submission"], move_to_id["Take Down"], move_to_id["Volt Tackle"], move_to_id["Wood Hammer"]}
+self_damaging_moves: set[int] = set({move_to_id["Curse"], move_to_id["Belly Drum"], move_to_id["Pain Split"]}) | recoil_moves
+hazard_moves: set[int] = {move_to_id['Spikes'], move_to_id['Stealth Rock'], move_to_id['Toxic Spikes']}
 explosive_moves: set[int] = {move_to_id["Explosion"], move_to_id["Selfdestruct"]}
+ohko_moves: set[int] = {move_to_id["Fissure"], move_to_id["Guillotine"], move_to_id["Horn Drill"], move_to_id["Sheer Cold"]}
+multhit_moves: set[int] = {move_to_id["Bone Rush"], move_to_id["Rock Blast"], move_to_id["Spike Cannon"], move_to_id["Comet Punch"], move_to_id["Fury Swipes"], move_to_id["Arm Thrust"], move_to_id["Barrage"], move_to_id["DoubleSlap"], move_to_id["Fury Attack"], move_to_id["Pin Missile"], move_to_id["Bullet Seed"], move_to_id["Icicle Spear"]}
 gender_based_moves: set[int] = {move_to_id["Attract"], move_to_id["Captivate"]}
-self_healing_moves: set[int] = {move_to_id["Aqua Ring"], move_to_id["Ingrain"], move_to_id["Heal Order"], move_to_id["Milk Drink"], move_to_id["Moonlight"], move_to_id["Morning Sun"], move_to_id["Recover"], move_to_id["Rest"], move_to_id["Roost"], move_to_id["Slack Off"], move_to_id["Softboiled"], move_to_id["Synthesis"]}
+self_healing_moves: set[int] = {move_to_id["Aqua Ring"], move_to_id["Ingrain"], move_to_id["Heal Order"], move_to_id["Milk Drink"], move_to_id["Moonlight"], move_to_id["Morning Sun"], move_to_id["Recover"], move_to_id["Rest"], move_to_id["Roost"], move_to_id["Slack Off"], move_to_id["Softboiled"], move_to_id["Synthesis"], move_to_id["Pain Split"]}
+item_stealing_moves: set[int] = {move_to_id["Thief"], move_to_id["Covet"]}
+item_swapping_moves: set[int] = {move_to_id["Trick"], move_to_id["Switcheroo"]}
+self_sleep_moves: set[int] = {move_to_id["Snore"], move_to_id["Sleep Talk"]}
+target_sleep_moves: set[int] = {move_to_id["Dream Eater"], move_to_id["Nightmare"]}
+stockpile_moves: set[int] = {move_to_id["Stockpile"], move_to_id["Swallow"], move_to_id["Spit Up"]}
+self_confusion_moves: set[int] = {move_to_id["Outrage"], move_to_id["Petal Dance"], move_to_id["Thrash"]}
+status_healing_moves: set[int] = {move_to_id["Refresh"], move_to_id["Heal Bell"], move_to_id["Aromatherapy"]}
+
+niche_damage_moves: set[int] = two_turn_moves | recharge_moves | explosive_moves | self_sleep_moves | target_sleep_moves | ohko_moves | set({move_to_id["Spit Up"]})
+niche_status_moves: set[int] = {move_to_id["Nightmare"], move_to_id["Swallow"], move_to_id["Imprison"], move_to_id["Sketch"], move_to_id["Splash"]}
+
+status_berry_items: set[int] = {item_to_id["Cheri Berry"], item_to_id["Chesto Berry"], item_to_id["Pecha Berry"], item_to_id["Rawst Berry"], item_to_id["Aspear Berry"], item_to_id["Persim Berry"], item_to_id["Lum Berry"]}
+healing_percent_items: set[int] = {item_to_id["Sitrus Berry"], item_to_id["Figy Berry"], item_to_id["Wiki Berry"], item_to_id["Mago Berry"], item_to_id["Aguav Berry"], item_to_id["Iapapa Berry"]}
 
 weather_setting_abilities: set[int] = {ability_to_id["Drought"], ability_to_id["Drizzle"], ability_to_id["Sand Stream"], ability_to_id["Snow Warning"]}
 weather_removing_abilities: set[int] = {ability_to_id["Cloud Nine"], ability_to_id["Air Lock"]}
 sleep_preventing_abilities: set[int] = {ability_to_id["Insomnia"], ability_to_id["Vital Spirit"]}
+status_countering_abilities: set[int] = {ability_to_id["Shed Skin"], ability_to_id["Hydration"], ability_to_id["Natural Cure"], ability_to_id["Leaf Guard"]}
+
+# Non-exhaustive list, but rather a 'useful' list.
+general_fling_items: set[int] = {item_to_id["Flame Orb"], item_to_id["King's Rock"], item_to_id["Light Ball"], item_to_id["Mental Herb"], item_to_id["Poison Barb"], item_to_id["Razor Fang"], item_to_id["Toxic Orb"], item_to_id["Hard Stone"], item_to_id["Iron Ball"]}
 
 def pid_to_nature(pid: int) -> int:
     return (pid % 100) % 25
@@ -190,7 +211,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     logger.info(f"Ability: {id_to_ability[ability]}")
     logger.info(f"Nature: {id_to_nature[nature]}")
 
-    # Generate Pokéball
+    # Generate Pokéball (needs to be saved).
     pokeball = world.random.randint(0x1,0x10)
     logger.info(f"Pokéball: {pokeball}")
 
@@ -207,6 +228,12 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     # Copy move data.
     move_data_mod = {**{k: v for k, v in move_data.items() if k in (lvl_moves | tm_moves)}}
     moves_list = list(move_data_mod.keys())
+    # Apply Technician Power Boost
+    if ability_to_id["Technician"] == ability:
+        for k, v in move_data_mod.items():
+            power = v['power']
+            if power <= 60:
+                move_data_mod[k]['power'] = int(power * 1.5)
     # Set Return and Frustration's Base Powers.
     if move_to_id["Return"] in moves_list:
         return_bp = int(max(friendship // 2.5, 1))
@@ -243,28 +270,75 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         for id in list(move_data_mod.keys()):
             move_data_mod[id]['type'] = type_to_id['Normal']
         logger.info("Set all moves to Normal Type.")
+    # Recalculate BP for fixed multi-hit Moves
+    if move_to_id["Bonemerang"] in moves_list:
+        bonemerang_one_hit_bp = move_data_mod[move_to_id["Bonemerang"]]['power']
+        move_data_mod[move_to_id["Bonemerang"]]['power'] = bonemerang_one_hit_bp * 2
+    if move_to_id["Double Hit"] in moves_list:
+        double_hit_one_hit_bp = move_data_mod[move_to_id["Double Hit"]]['power']
+        move_data_mod[move_to_id["Double Hit"]]['power'] = double_hit_one_hit_bp * 2
+    # Calculate BP for random multi-hit Moves
+    average_number_multi_hits = 3
+    if ability_to_id["Skill Link"] == ability:
+        average_number_multi_hits = 5
+    else:
+        average_number_multi_hits = 3
+    for k, v in move_data_mod.items():
+        if k in multhit_moves:
+            power = v['power']
+            move_data_mod[k]['power'] = int(power * average_number_multi_hits)
+    # Force BP variable moves to average.
+    if move_to_id["Magnitude"] in moves_list:
+        move_data_mod[move_to_id["Magnitude"]]['power'] = 70
+    if move_to_id["Present"] in moves_list:
+        move_data_mod[move_to_id["Present"]]['power'] = 52
+    if move_to_id["Trump Card"] in moves_list:
+        move_data_mod[move_to_id["Trump Card"]]['power'] = 60
+    if move_to_id["Wring Out"] in moves_list:
+        move_data_mod[move_to_id["Wring Out"]]['power'] = 60
+    if move_to_id["Crush Grip"] in moves_list:
+        move_data_mod[move_to_id["Crush Grip"]]['power'] = 60
+    if move_to_id["Water Spout"] in moves_list:
+        move_data_mod[move_to_id["Water Spout"]]['power'] = 75
+    if move_to_id["Eruption"] in moves_list:
+        move_data_mod[move_to_id["Eruption"]]['power'] = 75
+    if move_to_id["Reversal"] in moves_list:
+        move_data_mod[move_to_id["Reversal"]]['power'] = 80
+    if move_to_id["Punishment"] in moves_list: # 60 + 20 Per Increasced Stage of Target
+        move_data_mod[move_to_id["Punishment"]]['power'] = 60
+    # TODO: Deal damaging moves with fixed damage so that they aren't picked for things like Guts
+    # (either by artificially making them status moves, double checking when needed, etc).
     
     # Check for valid moves for the species.
     selected_moves: list[int] = []
     selectable_moves = lvl_moves | tm_moves
     
+    is_shedinja: bool = species_data["hp"] == 1
     # Remove extremely redundant moves from selectable_moves
     if ability in weather_setting_abilities or ability in weather_removing_abilities:
         selectable_moves -= weather_setting_moves
-    if species_data["hp"] == 1:
-        selectable_moves -= recoil_moves
+    if is_shedinja:
+        selectable_moves -= self_damaging_moves
         selectable_moves -= self_healing_moves
         selectable_moves -= set({move_to_id["Bide"]})
-    if ability in sleep_preventing_abilities:
-        selectable_moves -= set({move_to_id["Rest"]})
     if gender == gender_to_bit["Genderless"]:
         selectable_moves -= gender_based_moves
-    if ability == ability_to_id["Truant"]:
+    if ability in sleep_preventing_abilities:
+        selectable_moves -= set({move_to_id["Rest"]})
+    elif ability == ability_to_id["Scrappy"]:
+        selectable_moves -= set({move_to_id["Foresight"], move_to_id["Odor Sleuth"]})
+    elif ability == ability_to_id["Truant"]:
         selectable_moves -= two_turn_moves
-    if ability == ability_to_id["Damp"]:
+    elif ability == ability_to_id["Damp"]:
         selectable_moves -= explosive_moves
-    if ability == ability_to_id["Klutz"]:
-        selectable_moves -= set({move_to_id["Recycle"], move_to_id["Natural Gift"]})
+    elif ability == ability_to_id["Klutz"]:
+        # Note: Technically, Bug Bite and Pluck will remove and 'consume' the berry from the opponent; however, the user
+        # does not gain its effect. They both also still do damage.
+        selectable_moves -= set({move_to_id["Recycle"], move_to_id["Natural Gift"]}) #, move_to_id["Bug Bite"], move_to_id["Pluck"]})
+    elif ability == ability_to_id["Dry Skin"]:
+        selectable_moves -= set({move_to_id["Sunny Day"]})
+    elif ability == ability_to_id["Shell Armor"]:
+        selectable_moves -= set({move_to_id["Safeguard"]})
 
     num_selectable_moves = len(selectable_moves)
     
@@ -279,21 +353,26 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         if num_selectable_moves < 4:
             # Pad out the moveset until we get 4 moves.
             selected_moves.extend([move_to_id['-']] * (4 - num_selectable_moves))
-            
+    
+    selected_item = item_to_id["None"]
     # TODO: Insert chance of certain sets with usable strategies to be generated so that they appear
     # within 'reasonable' frequency.
     # Weather Set (ie: Rain Dance + Damage Water Move)
     # Helping Hand or Helping Hand/Protect
     # FEAR Strategies
     # Charge + Electric Attack
-    # Rest + Snore
+    # Rest + Snore/Sleep Talk
     # Defense Curl + Rollout / Ice Ball
     # Endure + Flail
     # Fake Out + Last Resort
+    # Stockpile + Spit Up/Swallow
+    # Weather
+    # Setup + Baton Pass
     # etc.
     
     # If none of the special cases above are true, use one of the following generalized methods to
     # generate a Pokemon.
+    # TODO: Remove status moves that have 0 use from being picked on set ie: Swords Dance on Sp. Attacker
     species_type_1 = species_data["type1"]
     species_type_2 = species_data["type2"]
     selectable_move_subsets: list[set] = [set(), set(), set(), set()]
@@ -320,7 +399,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
             while True:
                 min_power = 70
                 while True:
-                    selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == primary_stab_type and min_power <= v["power"] and v["category"] in categories and k not in two_turn_moves | recharge_moves}
+                    selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == primary_stab_type and min_power <= v["power"] and v["category"] in categories and k not in niche_damage_moves}
                     if len(selectable_move_subsets[0]) > 0 or min_power <= 0:
                         break
                     elif min_power <= 40:
@@ -337,16 +416,16 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                     break
             # Either select a secondary stab move (if applicable) or a coverage move.
             if primary_stab_type == secondary_stab_type or world.random.random() < 0.35:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 95 >= v["power"] and 40 <= v["power"] and k not in two_turn_moves | recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 95 >= v["power"] and 40 <= v["power"] and k not in niche_damage_moves}
                 if len(selectable_move_subsets[1]) == 0:
-                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 95 >= v["power"] and k not in two_turn_moves | recharge_moves}
+                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 95 >= v["power"] and k not in niche_damage_moves}
             else:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 80 >= v["power"] and 40 <= v["power"] and k not in recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 80 >= v["power"] and 40 <= v["power"] and k not in (niche_damage_moves - two_turn_moves)}
                 if len(selectable_move_subsets[1]) == 0:
                     selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 80 >= v["power"] and k not in recharge_moves}
             # Select the level and tm status moves.
-            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves}
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves}
+            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves | niche_status_moves}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves | niche_status_moves}
         elif generation_type_chance < 0.4:
             logger.info("Generation Type: 20% Select STAB + secondary STAB or coverage + coverage + lvl or tm status")
             # 20% Select STAB + secondary STAB or coverage + coverage + lvl or tm status
@@ -368,7 +447,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
             while True:
                 min_power = 60
                 while True:
-                    selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == primary_stab_type and 60 <= v["power"] and v["category"] in categories and k not in two_turn_moves | recharge_moves}
+                    selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == primary_stab_type and 60 <= v["power"] and v["category"] in categories and k not in niche_damage_moves}
                     if len(selectable_move_subsets[0]) > 0 or min_power <= 0:
                         break
                     elif min_power <= 40:
@@ -385,24 +464,24 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                     break
             # Either select a secondary stab move (if applicable) or a coverage move.
             if primary_stab_type == secondary_stab_type or world.random.random() < 0.2:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 80 >= v["power"] and 40 <= v["power"] and k not in recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 80 >= v["power"] and 40 <= v["power"] and k not in niche_damage_moves}
                 if len(selectable_move_subsets[1]) == 0:
-                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 80 >= v["power"] and k not in recharge_moves}
+                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and 80 >= v["power"]}
             else:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 60 >= v["power"] and 40 <= v["power"] and k not in two_turn_moves | recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 60 >= v["power"] and 40 <= v["power"] and k not in niche_damage_moves}
                 if len(selectable_move_subsets[1]) == 0:
-                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 60 >= v["power"] and k not in two_turn_moves | recharge_moves}
+                    selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] == secondary_stab_type and 60 >= v["power"]}
             # Select a random damage move.
-            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and v["type"] != secondary_stab_type and 80 >= v["power"] and k not in two_turn_moves | recharge_moves}
+            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != primary_stab_type and v["type"] != secondary_stab_type and 80 >= v["power"] and k not in niche_damage_moves}
             # Select a random level up status move.
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves | niche_status_moves}
         elif generation_type_chance < 0.5:
             # 10% Select 1 level damage move (higher power) + 1 level damage move (lower power) + random tm (higher power) + random tm (lower power)
             logger.info("Generation Type: 10% Select 1 level damage move (higher power) + 1 level damage move (lower power) + random tm (higher power) + random tm (lower power)")
-            selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in lvl_moves and 70 <= v["power"]}
-            selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in lvl_moves and 70 > v["power"] and k not in recharge_moves}
-            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in tm_moves and 70 <= v["power"] and k not in recharge_moves}
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and 70 > v["power"] and k not in recharge_moves}
+            selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in lvl_moves and 70 <= v["power"] and k not in niche_damage_moves}
+            selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in lvl_moves and 70 > v["power"] and k not in (niche_damage_moves - two_turn_moves - recharge_moves)}
+            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in tm_moves and 70 <= v["power"] and k not in (niche_damage_moves - two_turn_moves - recharge_moves)}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and 70 > v["power"] and k not in (niche_damage_moves - two_turn_moves - recharge_moves)}
         elif generation_type_chance < 0.6:
             # 10% Select 2 random lvl damage moves + 1 random tm move (not equal to stab) + random lvl status
             logger.info("Generation Type: # 10% Select 2 random lvl damage moves + 1 random tm move (not equal to stab) + random lvl status")
@@ -427,7 +506,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                     min_power = 0
                 else:
                     min_power -= 10
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_setting_moves | niche_status_moves}
         elif generation_type_chance < 0.7:
             # 10% X Damage Moves Descending In Power* + (4 - X) Moves Ascending in PP.
             logger.info("Generation Type: 10% X Damage Moves Descending In Power* + (4 - X) Moves Ascending in PP.")
@@ -435,16 +514,16 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
             damage_power_cap: int = 150
             for i in range(num_damage_moves - 1):
                 if world.random.random() < 0.8:
-                    selectable_move_subsets[i] = {k for k, v in move_data_mod.items() if k in lvl_moves and damage_power_cap >= v["power"] >= (damage_power_cap / 2) and v["category"] != category_to_id["Status"] and k not in two_turn_moves}
+                    selectable_move_subsets[i] = {k for k, v in move_data_mod.items() if k in lvl_moves and damage_power_cap >= v["power"] >= (damage_power_cap / 2) and v["category"] != category_to_id["Status"] and k not in (niche_damage_moves - two_turn_moves)}
                 else:
-                    selectable_move_subsets[i] = {k for k, v in move_data_mod.items() if k in tm_moves and damage_power_cap >= v["power"] >= (damage_power_cap / 2) and v["category"] != category_to_id["Status"] and k not in two_turn_moves}
+                    selectable_move_subsets[i] = {k for k, v in move_data_mod.items() if k in tm_moves and damage_power_cap >= v["power"] >= (damage_power_cap / 2) and v["category"] != category_to_id["Status"] and k not in (niche_damage_moves - two_turn_moves)}
                 damage_power_cap = int(damage_power_cap * 0.75)
             pp_cap: int = 5
             for i in range(4 - num_damage_moves):
                 if world.random.random() < 0.6:
-                    selectable_move_subsets[num_damage_moves + i] = {k for k, v in move_data_mod.items() if k in lvl_moves and pp_cap >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves}
+                    selectable_move_subsets[num_damage_moves + i] = {k for k, v in move_data_mod.items() if k in lvl_moves and pp_cap >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | niche_status_moves}
                 else:
-                    selectable_move_subsets[num_damage_moves + i] = {k for k, v in move_data_mod.items() if k in tm_moves and pp_cap >= v["pp"] and v["category"] == category_to_id["Status"] and k not in weather_moves | protect_moves}
+                    selectable_move_subsets[num_damage_moves + i] = {k for k, v in move_data_mod.items() if k in tm_moves and pp_cap >= v["pp"] and v["category"] == category_to_id["Status"] and k not in weather_moves | protect_moves | niche_status_moves}
                 pp_cap = pp_cap * 2
         elif generation_type_chance < 0.76:
             # 6% Forced Protect + 1 medium BP stab move + 1 high bp non-STAB move + low PP status move
@@ -457,7 +536,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                 categories = [category_to_id["Special"]]
             min_power = 60
             while True:
-                selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and min_power <= v["power"] <= 80 and v["category"] in categories and k not in two_turn_moves | recharge_moves}
+                selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and min_power <= v["power"] <= 80 and v["category"] in categories and k not in niche_damage_moves}
                 if len(selectable_move_subsets[0]) > 0 or min_power <= 0:
                     break
                 elif min_power <= 40:
@@ -466,14 +545,14 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                     min_power -= 10
             min_power = 80
             while True:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != species_type_1 and v["type"] != species_type_2 and min_power <= v["power"] <= 100 and v["category"] in categories and k not in two_turn_moves | recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["type"] != species_type_1 and v["type"] != species_type_2 and min_power <= v["power"] <= 100 and v["category"] in categories and k not in niche_damage_moves}
                 if len(selectable_move_subsets[1]) > 0 or min_power <= 0:
                     break
                 elif min_power <= 40:
                     min_power = 0
                 else:
                     min_power -= 10
-            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in lvl_moves and 10 >= v["pp"] and v["category"] == category_to_id["Status"]}
+            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in lvl_moves and 10 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in niche_status_moves}
             selectable_move_subsets[3] = protect_moves & selectable_moves
         elif generation_type_chance < 0.82:
             # 6 % Forced Two-Turn Move + 1 stab + 1 coverage + 1 status
@@ -487,7 +566,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                 categories = [category_to_id["Special"]]
             min_power = 70
             while True:
-                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and min_power <= v["power"] and v["category"] in categories and k not in two_turn_moves | recharge_moves}
+                selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and min_power <= v["power"] and v["category"] in categories and k not in niche_damage_moves}
                 if len(selectable_move_subsets[1]) > 0 or min_power <= 0:
                     break
                 elif min_power <= 40:
@@ -496,9 +575,9 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                     min_power -= 10
             selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in selectable_moves and(v["type"] != species_type_1 or v["type"] != species_type_2) and 90 >= v["power"] and 40 <= v["power"] and k not in two_turn_moves | recharge_moves}
             if world.random.random() < 0.6:
-                selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves}
+                selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in lvl_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | niche_status_moves}
             else:
-                selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in weather_moves | protect_moves}
+                selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in tm_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in weather_moves | protect_moves | niche_status_moves}
         elif generation_type_chance < 0.88:
             # 6% High BP Move + 3 Random Status
             logger.info("Generation Type: 6% High BP Move + 3 Random Status")
@@ -508,9 +587,9 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
                 selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and 80 <= v["power"] <= 100 and v["category"]  == category_to_id["Physical"] and k not in two_turn_moves | recharge_moves}
             else: # elif atk < sp_atk:
                 selectable_move_subsets[0] = {k for k, v in move_data_mod.items() if k in selectable_moves and (v["type"] == species_type_1 or v["type"] == species_type_2) and 80 <= v["power"] <= 100 and v["category"] == category_to_id["Special"] and k not in two_turn_moves | recharge_moves}
-            selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and 10 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves}
-            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in selectable_moves and 20 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves}
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in selectable_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves}
+            selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in selectable_moves and 10 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves | niche_status_moves}
+            selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in selectable_moves and 20 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves | niche_status_moves}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in selectable_moves and 30 >= v["pp"] and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves | niche_status_moves}
         elif generation_type_chance < 0.91:
             # 3% Quadruple status (why.)
             logger.info("Generation Type: 3% Quadruple status (why.)")
@@ -518,21 +597,21 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
             for i in range(num_lvl_status_moves):
                 selectable_move_subsets[i] = {k for k, v in move_data_mod.items() if k in lvl_moves and v["category"] == category_to_id["Status"] and k not in protect_moves}
             for i in range(4 - num_lvl_status_moves):
-                selectable_move_subsets[num_lvl_status_moves + i] = {k for k, v in move_data_mod.items() if k in tm_moves and v["category"] == category_to_id["Status"] and k not in weather_moves}
+                selectable_move_subsets[num_lvl_status_moves + i] = {k for k, v in move_data_mod.items() if k in tm_moves and v["category"] == category_to_id["Status"] and k not in weather_moves | niche_status_moves}
         elif generation_type_chance < 0.94:
             # 3% Force recharge move + 1 lvl damage + 1 tm damage + 1 status
             logger.info("Generation Type: 3% Force recharge move + 1 lvl damage + 1 tm damage + 1 status")
             selectable_move_subsets[0] = recharge_moves & selectable_moves
             selectable_move_subsets[1] = {k for k, v in move_data_mod.items() if k in lvl_moves and 0 < v["power"] and k not in two_turn_moves | recharge_moves}
             selectable_move_subsets[2] = {k for k, v in move_data_mod.items() if k in tm_moves and 0 < v["power"] and k not in two_turn_moves | recharge_moves}
-            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves}
+            selectable_move_subsets[3] = {k for k, v in move_data_mod.items() if k in selectable_moves and v["category"] == category_to_id["Status"] and k not in protect_moves | weather_moves | niche_status_moves}
         else:
-            # 6% Entirely random
-            logger.info("Generation Type: 6% Entirely random")
-            selectable_move_subsets[0] = selectable_moves
-            selectable_move_subsets[1] = selectable_moves
-            selectable_move_subsets[2] = selectable_moves
-            selectable_move_subsets[3] = selectable_moves
+            # 6% Mostly random.
+            logger.info("Generation Type: 6% MOSTLY random")
+            selectable_move_subsets[0] = selectable_moves - niche_status_moves - niche_damage_moves
+            selectable_move_subsets[1] = selectable_moves - niche_status_moves - niche_damage_moves
+            selectable_move_subsets[2] = selectable_moves - niche_status_moves - niche_damage_moves
+            selectable_move_subsets[3] = selectable_moves - niche_status_moves - niche_damage_moves
         selected_moves = generate_normal_moveset(world, selectable_move_subsets[0], selectable_move_subsets[1], selectable_move_subsets[2], selectable_move_subsets[3])
 
     # If for some reason the number of moves generated above is less than 4 for whatever reason,
@@ -566,6 +645,8 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         stats_pool.remove("atk")
     if not special:
         stats_pool.remove("spa")
+    if move_to_id["Trick Room"] in selected_moves:
+        stats_pool.remove("spd")
     while total_evs > 0:
         stat_chosen = world.random.sample(stats_pool, 1)[0]
         ev_amount = world.random.randint(1,min(total_evs, 252))
@@ -577,15 +658,121 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         total_evs -= ev_amount
     logger.info(f"EV Spread: {evs["hp"]}/{evs["atk"]}/{evs["def"]}/{evs["spe"]}/{evs["spa"]}/{evs["spd"]}")
     
+    # Check for item stealing move.
+    has_item_stealing_move = len(item_stealing_moves & set(selected_moves)) > 0
+    # Try to give species exclusive items. Having thief will override the item to None unless the
+    # user is Arceus with a form that requires a plate.
     if species == mon_to_id["Arceus"] and form > 0:
+        # Arceus-Steel or Arceus-Flying? Arceus-Steel(Arceus-Flying)
         selected_item = type_to_plate[form]
-    else:
-        # TODO: item logic
-        # Redundant Item Related Combos:
-        # Thief/Covet + Non-Consumable/Klutz
-        # Refresh + Toxic/Flame Orb
-        # Oblivious/Genderless + Destiny Knot
-        selected_item = item_to_id['None']
+    elif selected_item != item_to_id["None"] or has_item_stealing_move:
+        pass
+    elif species == mon_to_id["Pikachu"] and (physical or special) and world.random.random() < 0.5:
+        selected_item = item_to_id["Light Ball"]
+    elif species == mon_to_id["Farfetch'D"] and physical and world.random.random() < 0.5:
+        selected_item = item_to_id["Stick"]
+    elif species == mon_to_id["Ditto"] and world.random.random() < 0.5:
+        if not special or world.random.random() < 0.25:
+           selected_item = item_to_id["Metal Powder"]
+        else:
+           selected_item = item_to_id["Quick Powder"]
+    elif (species == mon_to_id["Cubone"] or species == mon_to_id["Marowak"]) and physical and world.random.random() < 0.5:
+        selected_item = item_to_id["Thick Club"]
+    elif species == mon_to_id["Clamperl"] and world.random.random() < 0.5:
+        if not special or world.random.random() < 0.5:
+            selected_item = item_to_id["DeepSeaScale"]
+        else:
+            selected_item = item_to_id["DeepSeaTooth"]
+    elif (species == mon_to_id["Latias"] or species == mon_to_id["Latios"]) and world.random.random() < 0.25:
+        selected_item = item_to_id["Soul Dew"]
+    elif species == mon_to_id["Dialga"] and world.random.random() < 0.25:
+        steel_or_dragon_moves = {k for k, v in move_data_mod.items() if k in selected_moves and(v["type"] == type_to_id["Dragon"] or v["type"] == type_to_id["Steel"]) and 0 < v["power"]}
+        if len(steel_or_dragon_moves) > 0:
+            selected_item = item_to_id["Adamant Orb"]
+    elif species == mon_to_id["Palkia"] and world.random.random() < 0.25:
+        steel_or_dragon_moves = {k for k, v in move_data_mod.items() if k in selected_moves and(v["type"] == type_to_id["Dragon"] or v["type"] == type_to_id["Water"]) and 0 < v["power"]}
+        if len(steel_or_dragon_moves) > 0:
+            selected_item = item_to_id["Lustrous Orb"]
+    
+    # Handle cases where a very specific item should be used.
+    if has_item_stealing_move:
+        pass
+    elif move_to_id["Natural Gift"] in selected_moves:
+        current_move_types = set({move_data_mod[move]["type"] for move in selected_moves})
+        pickable_berries = {k for k, v in berry_to_natural_gift_type.items() if v not in current_move_types}
+        selected_item = world.random.choice(list(pickable_berries))
+    elif move_to_id["Fling"] in selected_moves:
+        selected_damage_move_types: set[int] = {v['type'] for k, v in move_data_mod.items() if k in selected_moves and k != move_to_id["Fling"] and 0 < v["power"]}
+        usable_type_plates: set[int] = {type_to_plate[type] for type in selected_damage_move_types if type in type_to_plate.keys()}
+        selectable_fling_items = usable_type_plates | general_fling_items
+        selected_item = world.random.choice(list(selectable_fling_items))
+    elif move_to_id["Trick"] in selected_moves or move_to_id["Switcheroo"] in selected_moves:
+        selected_item = world.random.choice([item_to_id["Full Incense"], item_to_id["Lagging Tail"], item_to_id["Flame Orb"], item_to_id["Iron Ball"], item_to_id["Black Sludge"], item_to_id["Toxic Orb"], item_to_id["Choice Scarf"], item_to_id["Macho Brace"]])
+    elif move_to_id["Belly Drum"] in selected_moves and world.random.random() < 0.80:
+        selected_item = item_to_id["Sitrus Berry"]
+    elif move_to_id["Rest"] in selected_moves and world.random.random() < 0.5:
+        selected_item = item_to_id["Chesto Berry"]
+    # TODO: Light Clay for Reflect/Light Screen
+    # TODO: White Herb for Close Combat/Superpower/Draco Meteor/Psycho Boost/Leaf Storm/Overheat
+    elif ability == ability_to_id["Poison Heal"] in selected_moves and world.random.random() < 0.75:
+        selected_item = item_to_id["Toxic Orb"]
+    elif (len(self_confusion_moves & set(selected_moves)) > 0) and world.random.random() < 0.15:
+        selected_item = item_to_id["Persim Berry"]
+    elif ability == ability_to_id["Guts"] and physical and world.random.random() < 0.5:
+        selected_item = world.random.choice([item_to_id["Flame Orb"], item_to_id["Toxic Orb"]])
+    elif ability == ability_to_id["Marvel Scale"] and world.random.random() < 0.2:
+        selected_item = item_to_id["Flame Orb"]
+    
+    selectable_items = set()
+    # If no item is previously selected, try to pick one now.
+    if selected_item == item_to_id["None"] and not has_item_stealing_move:
+        # Because of the number of berries, maybe roll to have Pokemon hold a berry before hand?
+        # Or instead give the items weights that will determine how they are used.
+        # Status Curing Berries
+        if (ability not in status_countering_abilities | set({ability_to_id["Marvel Scale"], ability_to_id["Guts"], ability_to_id["Quick Feet"]})) and (len(set(selected_moves) | status_healing_moves) <= 0):
+            if ability not in sleep_preventing_abilities:
+                selectable_items.add(item_to_id["Chesto Berry"])
+            if ability != ability_to_id["Immunity"]:
+                selectable_items.add(item_to_id["Pecha Berry"])
+            if ability != ability_to_id["Heatproof"] and ability != ability_to_id["Water Veil"]:
+                # Technically Heatproof only halves burn damage.
+                selectable_items.add(item_to_id["Rawst Berry"])
+            if species_type_1 != type_to_id["Ice"] and species_type_2 != type_to_id["Ice"] and ability != ability_to_id["Magma Armor"] and world.random.random() < 0.15:
+                # Freeeze is really uncommon, so often just do not bother adding it.
+                selectable_items.add(item_to_id["Aspear Berry"])
+            if ability != ability_to_id["Tangled Feet"] and ability != ability_to_id["Own Tempo"]:
+                selectable_items.add(item_to_id["Persim Berry"])
+            selectable_items.add(item_to_id["Cheri Berry"])
+            selectable_items.add(item_to_id["Lum Berry"])
+        # TODO: Super-Effective Damage Halving Berries
+        
+        # TODO: Stat Raising Berries (Reuse EV Logic)
+        
+        # TODO: Percent Healing Berries (Sitrus Berry, etc) (no Shedinja)
+        
+        # TODO: Small Chance For Flat Healing Items to Be Added To Pool (Berry Juice, Oran Berry) (Unless Low HP) (no Shedinja)
+        
+        # TODO: White Herb
+        
+        # Unburden check to prevent non-consumables with Unburden.
+        if ability != ability_to_id["Unburden"]:
+            # TODO: Incense Items
+            
+            # TODO: Type-enhancing Items
+            
+            # TODO: Plate Items
+            
+            # TODO: Eviolite Also Add Data
+            
+            # TODO: Grip Claw
+            
+            # TODO: Black Sludge, Shell Bell, Leftovers
+            
+            # TODO: Choice Items, Life Orb
+            
+            pass
+    if selected_item == item_to_id["None"] and (len(selectable_items) > 0):
+        selected_item = world.random.choice(list(selectable_items))
     logger.info(f"Held Item: {id_to_item[selected_item]}\n")
     
     # Add the minimal Pokemon Data to the AP World.

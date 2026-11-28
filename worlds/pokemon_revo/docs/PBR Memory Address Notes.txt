@@ -52,6 +52,9 @@ Trainer ID Byte 1: 0x124E7
 Trainer ID Byte 2: 0x124E0
 Secret ID: 0x124E5
 
+Start of Box Names: 0x582F4
+Box names are 38 bytes long, with an 0x0000 halfword separating them
+
 1st Pokémon's Displayed HP: 0x8044e0d6 | Halfword
 2nd Pokémon's Displayed HP: 0x8044e1b2 | Halfword
 3rd Pokémon's Displayed HP: 0x8044e28e | Halfword

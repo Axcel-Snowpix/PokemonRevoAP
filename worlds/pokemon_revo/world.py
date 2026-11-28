@@ -13,7 +13,7 @@ from . import options as pbr_options  # rename due to a name conflict with World
 from .items import ITEM_TABLE, item_name_groups
 from .locations import LOCATION_TABLE, location_name_groups
 from .rom import PBRPatch
-from .pokemon_generator import generate_chaotic_random_pokemon, generate_normal_random_pokemon
+from .pokemon_generator import generate_chaotic_random_pokemon, generate_normal_random_pokemon, generate_presets
 
 class PBRSettings(settings.Group):
     class PBRRomFile(settings.UserFilePath):
@@ -63,7 +63,16 @@ class PBRWorld(World):
 
     def generate_early(self) -> None:
         # Generate the Pokemon that can be given out at level in yaml.
-        self.generated_pokemon = generate_normal_random_pokemon(self, 50)
+        if self.options.weaker_pokemon:
+            from .data.lvl_30_sets import lvl_30_sets as presets
+            lvl = 30
+        else:
+            from .data.lvl_50_sets import lvl_50_sets as presets
+            lvl = 50
+        if self.options.pokemon_set_type == "presets":
+            self.generated_pokemon = generate_presets(presets, lvl)
+        else: # elif self.options.pokemon_set_type == "randomized"
+            self.generated_pokemon = generate_normal_random_pokemon(self, lvl)
         re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
         if re_gen_passthrough and self.game in re_gen_passthrough:
             slot_data: dict[str, Any] = re_gen_passthrough[self.game]

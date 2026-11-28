@@ -1250,6 +1250,16 @@ async def pkmn_queue(ctx: PBRContext) -> None:
     else:
         species = mon_to_id[ctx.pkmn_queue[pkmn_idx]]
     pkmn_data = ctx.slot_data["pokemon_data"][species]
+    if pkmn_data == {}:
+        logger.info(f"Error: No set available for {ctx.pkmn_queue[pkmn_idx]}. You should only be able to see this if you get Pokémon using the cheat console.")
+        write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, ctx.pkmn_queue_idxs[0])
+        pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
+        pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
+        ctx.pkmn_queue.pop(pkmn_idx)
+        ctx.pkmn_queue_idxs.pop(pkmn_idx)
+        Utils.async_start(ctx.update_server_variable(pkmn_queue_key, ctx.pkmn_queue))
+        Utils.async_start(ctx.update_server_variable(pkmn_queue_idxs_key, ctx.pkmn_queue_idxs))
+        return
     tid = dme.read_byte(save_file_address + 0x124E7) << 8
     tid += dme.read_byte(save_file_address + 0x124E0)
     sid = read_short(save_file_address + 0x124E5)
@@ -1318,8 +1328,7 @@ async def pkmn_queue(ctx: PBRContext) -> None:
         flagsB=flagsB,
 
         # Block C
-        # TODO: Add Nicknames.
-        nickname=ctx.pkmn_queue[pkmn_idx].upper(),
+        nickname=pkmn_data["name"],
         game_of_origin=0x10, # Battle Revolution
 
         # Block D
@@ -1334,8 +1343,7 @@ async def pkmn_queue(ctx: PBRContext) -> None:
         hgss_pokeball=pkmn_data["pokeball"],
     )
     dme.write_bytes(save_file_address + pkmn_slot_offset, pkmn.build_binary())
-    expected_idx = read_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET)
-    write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, max(ctx.pkmn_queue_idxs[0], expected_idx))
+    write_short(save_file_address + PKMN_EXPECTED_IDX_OFFSET, ctx.pkmn_queue_idxs[0])
     pkmn_queue_key = AP_PKMN_QUEUE_KEY % ctx.slot
     pkmn_queue_idxs_key = AP_PKMN_QUEUE_IDXS_KEY % ctx.slot
     ctx.pkmn_queue.pop(pkmn_idx)
@@ -1561,6 +1569,18 @@ def check_correct_save(ctx: PBRContext) -> bool:
             # Set DS Game Version
             version_byte = dme.read_byte(save_file_address + 0x1256F)
             dme.write_byte(save_file_address + 0x1256F, version_byte | (ctx.slot_data["ds_game_version"] * 4))
+            # Set Box Names
+            box_idx = 0
+            while box_idx < 18:
+                box_start_address = save_file_address + 0x582F4 + 0x28 * box_idx
+                write_short(box_start_address, int.from_bytes("B".encode("utf-8"), byteorder="big"))
+                write_short(box_start_address + 0x2, int.from_bytes("O".encode("utf-8"), byteorder="big"))
+                write_short(box_start_address + 0x4, int.from_bytes("X".encode("utf-8"), byteorder="big"))
+                write_short(box_start_address + 0x6, int.from_bytes(" ".encode("utf-8"), byteorder="big"))
+                write_short(box_start_address + 0x8, int.from_bytes(str(box_idx + 1)[0:1].encode("utf-8"), byteorder="big"))
+                if len(str(box_idx + 1)) > 1:
+                    write_short(box_start_address + 0xA, int.from_bytes(str(box_idx + 1)[1:2].encode("utf-8"), byteorder="big"))
+                box_idx += 1
             if not ctx.correct_save:
                 logger.info(CONNECTION_CONNECTED_SAVE_STATUS)
                 ctx.correct_save = True

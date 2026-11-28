@@ -504,12 +504,10 @@ mon_to_id = {**{v: k for k, v in id_to_mon.items()}}
 
 mon_list = []
 for i, mon in id_to_mon.items():
-    if mon == "Deoxys-Normal":
-        mon_list.append("Deoxys")
-    elif mon == "Wormadam-Plant":
-        mon_list.append("Wormadam")
-    elif mon not in ["-----", "Wormadam-Sandy", "Wormadam-Trash", "Deoxys-Attack", "Deoxys-Defense", "Deoxys-Speed"]:
-        mon_list.append(mon)
+    if mon == "Deoxys-Attack":
+        break
+    elif mon != "-----":
+        mon_list.append(mon.removesuffix("-Plant").removesuffix("-Normal"))
 
 category_to_id = {
     'Physical': 0,

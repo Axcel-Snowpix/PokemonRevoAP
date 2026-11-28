@@ -6,7 +6,8 @@ from Utils import logging
 
 from BaseClasses import Item, ItemClassification
 
-from .data.pokemon_data import id_to_mon, mon_list
+from .data.pokemon_data import mon_to_id, mon_list
+from .data.lvl_30_sets import lvl_30_sets
 
 if TYPE_CHECKING:
     from .world import PBRWorld
@@ -143,6 +144,15 @@ def get_random_filler_item_name(world: PBRWorld, itempool) -> str:
     group = item_group_pool[world.random.randrange(0,len(item_group_pool))]
     item_list = []
     for item, data in ITEM_TABLE.items():
+        if data.group == "Pokémon":
+            if item == "Deoxys":
+                species_id = mon_to_id["Deoxys-Normal"]
+            elif item == "Wormadam":
+                species_id = mon_to_id["Wormadam-Plant"]
+            else:
+                species_id = mon_to_id[item]
+        else:
+            species_id = None
         if (
             data.group == group 
             and ((
@@ -156,9 +166,14 @@ def get_random_filler_item_name(world: PBRWorld, itempool) -> str:
                 or item != "Accuracy Drop Trap"
             )
             and (
-                world.create_item(item) not in itempool
-                or include_duplicate_mons
-                or group != "Pokémon"
+                group != "Pokémon"
+                or ((
+                    world.create_item(item) not in itempool
+                    or include_duplicate_mons
+                ) and (
+                    species_id in list(lvl_30_sets.keys())
+                    or not world.options.weaker_pokemon
+                ))
             )
         ):
             item_list.append(item)

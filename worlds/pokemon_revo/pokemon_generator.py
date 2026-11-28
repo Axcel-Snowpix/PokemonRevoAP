@@ -128,6 +128,36 @@ def get_stat(stat: str, base_stat: int, lvl: int, iv: int, ev: int, nature: int)
         else:
             nat_mod = 1
         return int((((2 * base_stat + iv + (ev // 4)) * lvl // 100) + 5) * nat_mod)
+
+def generate_presets(presets: dict[int, Any], lvl: int) -> list[dict[str, Any]]:
+    pokemon_sets: list[dict[str, Any]] = []
+    for species in pokemon_data.keys():
+        if id_to_mon[species] == "Deoxys-Attack":
+            break
+        elif species not in list(presets.keys()):
+            pokemon_sets.append({}) # Padding, ensures that indexes match the mon's dex number.
+        else:
+            ivs = presets[species]["ivs"] << 2
+            if presets[species]["name"] != id_to_mon[species].removesuffix("-Plant").removesuffix("-Normal").upper():
+                ivs = ivs | 0x1 # Set Nickname flag
+            pokemon_sets.append({
+                "name": presets[species]["name"],
+                "pid": presets[species]["pid"],
+                "lvl": lvl,
+                "form": presets[species]["form"],
+                "ivs": ivs,
+                "friendship": presets[species]["friendship"],
+                "moves": presets[species]["moves"],
+                "item": presets[species]["item"],
+                "hp_ev": presets[species]["hp_ev"],
+                "atk_ev": presets[species]["atk_ev"],
+                "def_ev": presets[species]["def_ev"],
+                "spe_ev": presets[species]["spe_ev"],
+                "spa_ev": presets[species]["spa_ev"],
+                "spd_ev": presets[species]["spd_ev"],
+                "pokeball": presets[species]["pokeball"],
+            })
+    return pokemon_sets
     
 def generate_normal_random_pokemon(world: World, lvl: int) -> list[dict[str, Any]]:
     # TODO: Remove moves listed in the yaml that the user wont want selected. ie: Splash, Memento
@@ -164,6 +194,13 @@ def generate_chaotic_random_pokemon(world: World, lvl):
 def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_moves: set[int], lvl: int) -> dict[str, Any]:
     logger = logging.getLogger()
 
+    # Note: We could do something more with nicknames.
+    if species == mon_to_id["Nidoran F"]:
+        name = "NIDORAN㌩" # ㌩ is displayed as a halfwidth female sign ingame.
+    elif species == mon_to_id["Nidoran M"]:
+        name = "NIDORAN㌨" # ㌨ is displayed as a halfwidth male sign ingame.
+    else:
+        name = id_to_mon[species].removesuffix("-Plant").removesuffix("-Normal").upper()
     species_data = pokemon_data[species]
 
     # Generate Pokémon's Form, if it has more than 1.
@@ -729,7 +766,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
         # Because of the number of berries, maybe roll to have Pokemon hold a berry before hand?
         # Or instead give the items weights that will determine how they are used.
         # Status Curing Berries
-        if (ability not in status_countering_abilities | set({ability_to_id["Marvel Scale"], ability_to_id["Guts"], ability_to_id["Quick Feet"]})) and (len(set(selected_moves) | status_healing_moves) <= 0):
+        if (ability not in status_countering_abilities | set({ability_to_id["Marvel Scale"], ability_to_id["Guts"], ability_to_id["Quick Feet"]})) and (len(set(selected_moves) & status_healing_moves) <= 0):
             if ability not in sleep_preventing_abilities:
                 selectable_items.add(item_to_id["Chesto Berry"])
             if ability != ability_to_id["Immunity"]:
@@ -775,6 +812,7 @@ def generate_pokemon_inner(world: World, species: int, lvl_moves: set[int], tm_m
     
     # Add the minimal Pokemon Data to the AP World.
     minimal_pokemon_data: dict[str, Any] = {
+        "name": name,
         "pid": pid,
         "lvl": lvl,
         "form": form,

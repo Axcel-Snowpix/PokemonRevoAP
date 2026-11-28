@@ -167,6 +167,25 @@ class Battlesanity(DefaultOnToggle):
     """
     display_name = "Battlesanity"
 
+class PokemonSetType(Choice):
+    """
+    Determines what type of set Pokémon in the item pool will have.
+
+    Presets: Pokémon will have presets made for Archipelago.
+    Randomized: Pokémon will have randomly generated sets.
+    """
+    display_name = "Pokémon Sets"
+    option_presets = 0
+    option_randomized = 1
+    default = 0
+
+class WeakerPokemon(Toggle):
+    """
+    Sets Pokémon in the item pool to level 30 instead of 50, and limits available species to weaker ones.
+    This allows you to better match the opponent's strength and increase the game's difficulty.
+    """
+    display_name = "Weaker Pokémon"
+
 class PokemonWeight(Range):
     """
     Determines the weighted chance of Pokémon being added when filling the item pool.
@@ -176,7 +195,7 @@ class PokemonWeight(Range):
     display_name = "Pokémon Weight"
     range_start = 0
     range_end = 50
-    default = 20
+    default = 25
 
 class PokeCouponWeight(Range):
     """
@@ -289,6 +308,8 @@ class PBROptions(PerGameCommonOptions):
     randomize_rental_passes: RandomizeRentalPasses
     starting_rental_pass: StartingRentalPass
     battlesanity: Battlesanity
+    pokemon_set_type: PokemonSetType
+    weaker_pokemon: WeakerPokemon
     pokemon_weight: PokemonWeight
     poke_coupon_weight: PokeCouponWeight
     healing_item_weight: HealingItemWeight
@@ -310,6 +331,10 @@ option_groups = [
     OptionGroup(
         "Main Options",
         [StartingColosseumAmount, StartingColosseumPool, RandomizeRentalPasses, StartingRentalPass, Battlesanity],
+    ),
+    OptionGroup(
+        "Pokémon Set Options",
+        [PokemonSetType, WeakerPokemon],
     ),
     OptionGroup(
         "Filler Item Options",
